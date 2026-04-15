@@ -2,16 +2,16 @@
 
 ## Executive Summary
 
-| Aspect | Decision |
-|--------|----------|
-| **Stack** | Next.js 14 + Supabase + shadcn/ui + Zustand |
-| **Cost** | $0 / month (Vercel + Supabase free tier) |
-| **Frontend** | Next.js App Router, TypeScript, Tailwind |
-| **Backend** | Next.js API Routes (serverless) |
-| **DB** | PostgreSQL (Supabase) |
-| **Storage** | Supabase Storage for images |
-| **Phases** | 6 phases, ~7-8 weeks |
-| **Auth** | Supabase Auth (single user) |
+| Aspect       | Decision                                    |
+| ------------ | ------------------------------------------- |
+| **Stack**    | Next.js 14 + Supabase + shadcn/ui + Zustand |
+| **Cost**     | $0 / month (Vercel + Supabase free tier)    |
+| **Frontend** | Next.js App Router, TypeScript, Tailwind    |
+| **Backend**  | Next.js API Routes (serverless)             |
+| **DB**       | PostgreSQL (Supabase)                       |
+| **Storage**  | Supabase Storage for images                 |
+| **Phases**   | 6 phases, ~7-8 weeks                        |
+| **Auth**     | Supabase Auth (single user)                 |
 
 ---
 
@@ -19,24 +19,24 @@
 
 ### Main Option: **Next.js + Supabase** (100% free)
 
-| Layer | Technology | Justification |
-|-------|-----------|---------------|
-| **Frontend** | Next.js 14 (App Router) | SSR/SSG included, automatic deploy to Vercel (free tier), automatic routing |
-| **Backend** | Next.js API Routes (Route Handlers) | Serverless functions in the same deployment, no separate server needed |
-| **Database** | Supabase (PostgreSQL) | **500MB storage**, **10k rows/month** (enough for a dental practice), **Auth** included, **Row Level Security** |
-| **Storage (images)** | Supabase Storage | Store X-rays, tomographies, patient photos |
-| **DB ORM** | Supabase JS Client (direct) |
-| **UI** | shadcn/ui + Tailwind CSS | Accessible components, fast professional design |
-| **State** | Zustand | Simple, less boilerplate than Redux, perfect for this type of app |
+| Layer                | Technology                          | Justification                                                                                                   |
+| -------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Frontend**         | Next.js 14 (App Router)             | SSR/SSG included, automatic deploy to Vercel (free tier), automatic routing                                     |
+| **Backend**          | Next.js API Routes (Route Handlers) | Serverless functions in the same deployment, no separate server needed                                          |
+| **Database**         | Supabase (PostgreSQL)               | **500MB storage**, **10k rows/month** (enough for a dental practice), **Auth** included, **Row Level Security** |
+| **Storage (images)** | Supabase Storage                    | Store X-rays, tomographies, patient photos                                                                      |
+| **DB ORM**           | Supabase JS Client (direct)         |
+| **UI**               | shadcn/ui + Tailwind CSS            | Accessible components, fast professional design                                                                 |
+| **State**            | Zustand                             | Simple, less boilerplate than Redux, perfect for this type of app                                               |
 
 ### Free Tier Limits (enough for a dental practice)
 
-| Resource | Free Limit | Enough? |
-|---------|-------------|-----------|
-| Supabase DB | 500MB / 10k rows/month | ✅ A dental practice won't reach 10k patients |
-| Supabase Storage | 1GB | ✅ Enough for years of images |
-| Vercel | 100GB bandwidth/month | ✅ Only the dentist uses the app |
-| Vercel Build | 100h/month | ✅ No daily automatic builds |
+| Resource         | Free Limit             | Enough?                                       |
+| ---------------- | ---------------------- | --------------------------------------------- |
+| Supabase DB      | 500MB / 10k rows/month | ✅ A dental practice won't reach 10k patients |
+| Supabase Storage | 1GB                    | ✅ Enough for years of images                 |
+| Vercel           | 100GB bandwidth/month  | ✅ Only the dentist uses the app              |
+| Vercel Build     | 100h/month             | ✅ No daily automatic builds                  |
 
 ---
 
@@ -225,6 +225,7 @@ Patient
 **Chosen**: No separate backend server
 
 **Justification**:
+
 - Single repo, single deployment
 - Next.js API Routes enough for this volume
 - No need for a dedicated server for a single practice
@@ -238,6 +239,7 @@ Patient
 **Chosen**: PostgreSQL over NoSQL
 
 **Justification**:
+
 - PostgreSQL has **real relationships** (patient → studies → treatments)
 - Supabase JS Client + PostgreSQL = direct queries
 - Supabase = PostgreSQL + Auth + Storage
@@ -252,6 +254,7 @@ Patient
 **Chosen**: Store odontogram state as JSON in a single field
 
 **Justification**:
+
 - 32 teeth + states don't need their own table
 - JSON allows adding fields without migration
 - Supabase JS Client supports JSONB type in PostgreSQL
@@ -278,6 +281,7 @@ model OdontogramPiece {
 **Chosen**: Native Supabase Storage
 
 **Justification**:
+
 - Same provider = less cost/complexity
 - 1GB free is enough
 - Direct backend integration
@@ -291,6 +295,7 @@ model OdontogramPiece {
 **Chosen**: shadcn/ui components as base
 
 **Justification**:
+
 - Professional design out-of-the-box
 - Tailwind = easy to customize
 - Included accessibility
@@ -303,6 +308,7 @@ model OdontogramPiece {
 **Chosen**: Simple authentication (Single Superuser)
 
 **Justification**:
+
 - Requirement says "single actor: dentist"
 - No need for multiple roles
 - Supabase Auth + email/password is enough
@@ -315,6 +321,7 @@ model OdontogramPiece {
 **Chosen**: `isActive` boolean for soft delete
 
 **Justification**:
+
 - More intuitive naming (isActive = true means patient is active)
 - Consistent with Treatment model which also uses isActive
 - Easy to query: `where: { isActive: true }`
@@ -326,6 +333,7 @@ model OdontogramPiece {
 **Chosen**: No accounting in this version
 
 **Justification**:
+
 - User preference to design it better later
 - Focus on core clinical features first
 - Accounting can be added as a separate module when needed
