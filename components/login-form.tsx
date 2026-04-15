@@ -96,7 +96,12 @@ export function LoginForm({
               </FieldDescription>
             )}
             <Field>
-              <Button type="submit" disabled={loading} className="w-full">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full"
+                data-testid="login-submit-button"
+              >
                 {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </Field>
