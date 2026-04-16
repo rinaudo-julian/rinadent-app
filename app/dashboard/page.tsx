@@ -6,5 +6,5 @@ export default function DashboardPage() {
         Sistema de Gestión Odontológica
       </p>
     </div>
-  )
+  );
 }
