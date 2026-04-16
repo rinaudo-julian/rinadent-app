@@ -1,16 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-// Hardcoded credentials para testing de CodeQL
-const HARDCODED_URL = "https://xdqatcjqziedutsrxmhv.supabase.co";
-const HARDCODED_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgn4ReRka7QEzInM6EI";
-
 export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
-    HARDCODED_URL,
-    HARDCODED_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {
