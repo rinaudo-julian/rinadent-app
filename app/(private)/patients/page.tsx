@@ -1,8 +1,17 @@
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { PatientsTable } from "@/components/patients/patients-table";
 import { SearchInput } from "@/components/search-input";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+
+function SearchInputWithSuspense() {
+  return (
+    <Suspense fallback={<div className="h-10 w-full max-w-sm animate-pulse bg-muted rounded-md" />}>
+      <SearchInput />
+    </Suspense>
+  );
+}
 
 export default function PatientsPage() {
   return (
@@ -19,7 +28,7 @@ export default function PatientsPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <SearchInput />
+          <SearchInputWithSuspense />
         </div>
       </div>
 
