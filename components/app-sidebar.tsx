@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import packageJson from "../package.json";
 
@@ -19,7 +20,7 @@ import {
   SidebarRail,
   SidebarFooter
 } from "@/components/ui/sidebar";
-import { GalleryVerticalEnd, Users, LayoutDashboard } from "lucide-react";
+import { GalleryVerticalEnd, Users, LayoutDashboard, BriefcaseMedical } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import type { LucideIcon } from "lucide-react";
 
@@ -56,6 +57,11 @@ const data: { navMain: NavGroup[] } = {
           title: "Pacientes",
           url: "/patients",
           icon: Users
+        },
+        {
+          title: "Tratamientos",
+          url: "/treatments",
+          icon: BriefcaseMedical
         }
       ]
     }
@@ -63,6 +69,8 @@ const data: { navMain: NavGroup[] } = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -90,7 +98,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {item.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={item.isActive ?? (pathname === item.url || pathname.startsWith(`${item.url}/`))}
+                    >
                       <Link href={item.url}>
                         {item.icon && <item.icon className="size-4 mr-2" />}
                         <span>{item.title}</span>

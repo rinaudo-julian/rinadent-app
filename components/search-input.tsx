@@ -5,7 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-export function SearchInput() {
+interface SearchInputProps {
+  basePath?: string;
+  placeholder?: string;
+}
+
+export function SearchInput({
+  basePath = "/patients",
+  placeholder = "Buscar paciente..."
+}: SearchInputProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialValue = searchParams.get("search") || "";
@@ -19,22 +27,22 @@ export function SearchInput() {
       if (value.trim()) {
         params.set("search", value.trim());
       }
-      router.push(`/patients?${params.toString()}`);
+      router.push(`${basePath}?${params.toString()}`);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [value, router]);
+  }, [value, router, basePath]);
 
   return (
     <div className="relative flex-1 max-w-sm">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-      <Input
-        type="search"
-        placeholder="Buscar paciente..."
-        className="pl-10"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
+        <Input
+          type="search"
+          placeholder={placeholder}
+          className="pl-10"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
     </div>
   );
 }

@@ -92,8 +92,6 @@ CREATE TABLE treatments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
-  description TEXT,
-  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -294,10 +292,7 @@ export function useTreatments(patientId: string) { ... }
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/treatments` | List all active treatments |
-| `POST` | `/api/treatments` | Create new treatment |
-| `PUT` | `/api/treatments/[id]` | Update treatment |
-| `DELETE` | `/api/treatments/[id]` | Soft delete |
+| `GET` | `/api/treatments` | List paginated treatments (search by code/name) |
 
 ### Patient Treatments
 
