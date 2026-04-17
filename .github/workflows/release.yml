@@ -23,20 +23,13 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
-
-      - name: Generate release notes
-        id: release_notes
-        uses: metcalfc/changelog-generator@v4
-        with:
-          myToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: Release ${{ steps.tag.outputs.tag }}
-          body: ${{ steps.release_notes.outputs.changelog }}
+          generate_release_notes: true
           draft: false
           prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
         env:
