@@ -11,11 +11,9 @@
 -- ENUMS (all in English)
 -- ============================================================================
 
-CREATE TYPE condition_coverage AS ENUM ('obra_social', 'particular');
+CREATE TYPE condition_coverage AS ENUM ('health_insurance', 'private');
 
 CREATE TYPE gender AS ENUM ('male', 'female', 'other');
-
-CREATE TYPE boolean_answer AS ENUM ('yes', 'no');
 
 CREATE TYPE oncological_treatment AS ENUM ('completed', 'ongoing', 'none');
 
@@ -48,18 +46,17 @@ CREATE TABLE medical_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID UNIQUE REFERENCES patients(id) ON DELETE CASCADE,
   
-  -- Binary fields
-  allergies boolean_answer NOT NULL,
-  heart_condition boolean_answer NOT NULL,
-  diabetes boolean_answer NOT NULL,
-  hypertension boolean_answer NOT NULL,
-  anticoagulation boolean_answer NOT NULL,
-  bisphosphonates boolean_answer NOT NULL,
-  osteoporosis boolean_answer NOT NULL,
-  hemophilia boolean_answer NOT NULL,
-  covid boolean_answer NOT NULL,
+  allergies INTEGER NOT NULL CHECK (allergies IN (0,1)),
+  heart_condition INTEGER NOT NULL CHECK (heart_condition IN (0,1)),
+  diabetes INTEGER NOT NULL CHECK (diabetes IN (0,1)),
+  hypertension INTEGER NOT NULL CHECK (hypertension IN (0,1)),
+  anticoagulation INTEGER NOT NULL CHECK (anticoagulation IN (0,1)),
+  bisphosphonates INTEGER NOT NULL CHECK (bisphosphonates IN (0,1)),
+  osteoporosis INTEGER NOT NULL CHECK (osteoporosis IN (0,1)),
+  hemophilia INTEGER NOT NULL CHECK (hemophilia IN (0,1)),
+  covid INTEGER NOT NULL CHECK (covid IN (0,1)),
   covid_observation TEXT,
-  bone_density_studies boolean_answer NOT NULL,
+  bone_density_studies INTEGER NOT NULL CHECK (bone_density_studies IN (0,1)),
   
   -- Text fields
   medications TEXT,
