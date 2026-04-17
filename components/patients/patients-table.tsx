@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 function calculateAge(dateOfBirth: string): number {
@@ -59,10 +59,6 @@ export function PatientsTable({
   // Use fetched data or initial data
   const patients = data?.data ?? initialData?.data ?? [];
   const total = data?.total ?? initialData?.total ?? 0;
-  const page = data?.page ?? initialPage;
-  const limit = data?.limit ?? initialLimit;
-  const totalPages = data?.totalPages ?? initialData?.totalPages ?? 0;
-
   if (error) {
     return (
       <div className="text-center p-4 text-red-500">
@@ -115,7 +111,7 @@ export function PatientsTable({
                         </Link>
                       </Button>
                       <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/patients/${patient.id}/edit`}>
+                        <Link href={`/patients/${patient.id}`}>
                           <Pencil className="size-4" />
                           <span className="sr-only">Editar</span>
                         </Link>

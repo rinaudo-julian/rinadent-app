@@ -207,6 +207,3 @@ describe("useCreatePatient", () => {
       expect(result.current.states).toHaveProperty("error");
     });
   });
-
-const test = 1;
-// Final
