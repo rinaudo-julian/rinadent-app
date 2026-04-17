@@ -27,7 +27,7 @@ Protocolo para la creación de componentes y vistas utilizando Next.js, TypeScri
 * **Clean JSX:** El componente debe ser "tonto" (presentacional). No debe contener lógica de fetching (`useQuery`) ni cálculos complejos.
 
 ### 3. Hook Pattern (The Logic Hook)
-* **Naming:** Los hooks deben estar en `/hooks` y seguir la convención `use[ComponentName]Logic.ts` o un nombre funcional descriptivo.
+* **Naming:** Los hooks deben estar en `/hooks` y seguir la convención `use[ComponentName].ts` o un nombre funcional descriptivo. NO usar el sufijo "Logic".
 * **Internal Logic:** El hook debe encapsular:
     * Llamadas a **TanStack Query** (`useQuery`, `useMutation`).
     * Estados locales de React (`useState`, `useReducer`).
