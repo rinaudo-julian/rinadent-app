@@ -16,9 +16,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  SidebarFooter
 } from "@/components/ui/sidebar";
 import { GalleryVerticalEnd, Users, LayoutDashboard } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 import type { LucideIcon } from "lucide-react";
 
 type NavItem = {
@@ -52,7 +54,7 @@ const data: { navMain: NavGroup[] } = {
       items: [
         {
           title: "Pacientes",
-          url: "/",
+          url: "/patients",
           icon: Users
         }
       ]
@@ -101,6 +103,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter>
+        <LogoutButton />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
