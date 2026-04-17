@@ -43,14 +43,14 @@ const data: { navMain: NavGroup[] } = {
       items: [
         {
           title: "Panel de Control",
-          url: "/",
+          url: "/dashboard",
           icon: LayoutDashboard
         }
       ]
     },
     {
-      title: "Clinica",
-      url: "/",
+      title: "Clínica",
+      url: "/patients",
       items: [
         {
           title: "Pacientes",
