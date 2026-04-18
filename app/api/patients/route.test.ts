@@ -112,15 +112,29 @@ describe("GET /api/patients", () => {
       expect(data.limit).toBe(50);
     });
 
-    it("should accept limit=100", async () => {
-      const request = new Request(`${BASE_URL}/api/patients?limit=100`);
+    it("should accept limit=20", async () => {
+      const request = new Request(`${BASE_URL}/api/patients?limit=20`);
       const response = await GET(request);
       const data = await response.json();
-      expect(data.limit).toBe(100);
+      expect(data.limit).toBe(20);
+    });
+
+    it("should accept limit=30", async () => {
+      const request = new Request(`${BASE_URL}/api/patients?limit=30`);
+      const response = await GET(request);
+      const data = await response.json();
+      expect(data.limit).toBe(30);
     });
 
     it("should fallback to 10 for invalid limit", async () => {
       const request = new Request(`${BASE_URL}/api/patients?limit=25`);
+      const response = await GET(request);
+      const data = await response.json();
+      expect(data.limit).toBe(10);
+    });
+
+    it("should fallback to 10 for limit=100", async () => {
+      const request = new Request(`${BASE_URL}/api/patients?limit=100`);
       const response = await GET(request);
       const data = await response.json();
       expect(data.limit).toBe(10);
@@ -210,24 +224,10 @@ describe("GET /api/patients", () => {
     });
   });
 
-  describe("Filtering - is_active", () => {
-    it("should default is_active to true", async () => {
-      const request = new Request(`${BASE_URL}/api/patients`);
-      await GET(request);
-      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
-    });
-
-    it("should accept is_active=false", async () => {
-      const request = new Request(`${BASE_URL}/api/patients?is_active=false`);
-      await GET(request);
-      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", false);
-    });
-
-    it("should accept is_active=true", async () => {
-      const request = new Request(`${BASE_URL}/api/patients?is_active=true`);
-      await GET(request);
-      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
-    });
+  it("should not filter by is_active", async () => {
+    const request = new Request(`${BASE_URL}/api/patients`);
+    await GET(request);
+    expect(mockQuery.eq).not.toHaveBeenCalledWith("is_active", expect.anything());
   });
 
   describe("Filtering - search", () => {
@@ -336,6 +336,7 @@ describe("POST /api/patients", () => {
       const request = createRequest({
         first_name: "Juan",
         last_name: "Pérez",
+        dni: "30123456",
         date_of_birth: "1990-01-15",
         street: "Av. Rivadavia",
         street_number: "1234",
@@ -360,6 +361,7 @@ describe("POST /api/patients", () => {
         id: "123",
         first_name: "Juan",
         last_name: "Pérez",
+        dni: "30123456",
         date_of_birth: "1990-01-15",
         street: "Av. Rivadavia",
         street_number: "1234",
@@ -368,7 +370,6 @@ describe("POST /api/patients", () => {
         gender: "male",
         condition_coverage: "health_insurance",
         phone: "3534184508",
-        is_active: true,
         created_at: "2024-01-01",
         updated_at: "2024-01-01"
       };
@@ -380,6 +381,7 @@ describe("POST /api/patients", () => {
       const request = createRequest({
         first_name: "Juan",
         last_name: "Pérez",
+        dni: "30123456",
         date_of_birth: "1990-01-15",
         street: "Av. Rivadavia",
         street_number: "1234",
@@ -395,6 +397,16 @@ describe("POST /api/patients", () => {
       expect(response.status).toBe(201);
       const data = await response.json();
       expect(data.first_name).toBe("Juan");
+      expect(mockQuery.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dni: "30123456"
+        })
+      );
+      expect(mockQuery.insert).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          is_active: expect.anything()
+        })
+      );
     });
   });
 
@@ -410,6 +422,7 @@ describe("POST /api/patients", () => {
       const request = createRequest({
         first_name: "Juan",
         last_name: "Pérez",
+        dni: "30123456",
         date_of_birth: "1990-01-15",
         street: "Av. Rivadavia",
         street_number: "1234",

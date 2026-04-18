@@ -101,7 +101,24 @@ export function CreatePatientForm({
               </div>
             </div>
 
-            {/* Row 2: Fecha de nacimiento y Género */}
+            {/* Row 2: DNI */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dni">DNI *</Label>
+                <Input
+                  id="dni"
+                  value={formData.dni}
+                  onChange={(e) => methods.setField("dni", e.target.value)}
+                  placeholder="30123456"
+                  className={errors.dni ? "border-destructive" : ""}
+                />
+                {errors.dni && (
+                  <p className="text-sm text-destructive">{errors.dni}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Row 3: Fecha de nacimiento y Género */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date_of_birth">Fecha de nacimiento *</Label>
@@ -138,7 +155,7 @@ export function CreatePatientForm({
               </div>
             </div>
 
-            {/* Row 3: Teléfono y Cobertura */}
+            {/* Row 4: Teléfono y Cobertura */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Teléfono *</Label>
@@ -175,7 +192,7 @@ export function CreatePatientForm({
               </div>
             </div>
 
-            {/* Row 4: Calle y Número */}
+            {/* Row 5: Calle y Número */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="street">Calle *</Label>
@@ -210,7 +227,7 @@ export function CreatePatientForm({
               </div>
             </div>
 
-            {/* Row 5: Localidad y Código Postal */}
+            {/* Row 6: Localidad y Código Postal */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="locality">Localidad *</Label>

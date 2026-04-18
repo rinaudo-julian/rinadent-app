@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS patients (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_patients_active ON patients(is_active) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_patients_created_at ON patients(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_patients_active ON patients(is_active);
 
 ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
 

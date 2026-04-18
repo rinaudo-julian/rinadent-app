@@ -4,6 +4,7 @@ export interface Patient {
   id: string;
   first_name: string;
   last_name: string;
+  dni: string;
   date_of_birth: string;
   street: string;
   street_number: string;
@@ -12,7 +13,6 @@ export interface Patient {
   gender: "male" | "female" | "other";
   condition_coverage: "health_insurance" | "private";
   phone: string;
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

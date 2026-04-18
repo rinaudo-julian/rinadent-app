@@ -9,6 +9,7 @@ export interface Patient {
   id: string;
   first_name: string;
   last_name: string;
+  dni: string;
   date_of_birth: string;
   street: string;
   street_number: string;
@@ -17,7 +18,6 @@ export interface Patient {
   gender: "male" | "female";
   condition_coverage: "health_insurance" | "private";
   phone: string;
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -42,14 +42,12 @@ export async function GET(request: Request) {
   // Parse and sanitize limit
   const rawLimit = searchParams.get("limit");
   const parsedLimit = Number(rawLimit);
-  const validLimits = [10, 50, 100];
+  const validLimits = [10, 20, 30, 50];
   const limit = validLimits.includes(parsedLimit) ? parsedLimit : 10;
 
   // Calculate offset - ensure non-negative
   const offset = Math.max(0, (page - 1) * limit);
 
-  // Filter params
-  const isActive = searchParams.get("is_active") !== "false";
   const search = searchParams.get("search")?.trim() || "";
 
   const supabase = await createClient();
@@ -58,7 +56,6 @@ export async function GET(request: Request) {
   let query = supabase
     .from("patients")
     .select("*", { count: "exact" })
-    .eq("is_active", isActive)
     .order("created_at", { ascending: false });
 
   // Add search filter before range
@@ -126,10 +123,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("patients")
-    .insert({
-      ...result.data,
-      is_active: true
-    })
+    .insert(result.data)
     .select()
     .single();
 
