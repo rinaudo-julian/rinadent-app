@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Patient } from "@/hooks/use-patients";
 
@@ -18,6 +19,14 @@ function calculateAge(dateOfBirth: string): number {
   }
 
   return age;
+}
+
+function formatCoverage(coverage: Patient["condition_coverage"]): string {
+  return coverage === "health_insurance" ? "Obra Social" : "Particular";
+}
+
+function formatCreatedAt(createdAt: string): string {
+  return createdAt.split("T")[0] ?? createdAt;
 }
 
 export const patientsTableColumns: ColumnDef<Patient>[] = [
@@ -38,8 +47,8 @@ export const patientsTableColumns: ColumnDef<Patient>[] = [
     },
     meta: {
       label: "Paciente",
-      headerClassName: "w-[40%] min-w-[220px]",
-      cellClassName: "w-[40%] min-w-[220px]",
+      headerClassName: "w-[20%]",
+      cellClassName: "w-[20%]",
     },
   },
   {
@@ -47,8 +56,8 @@ export const patientsTableColumns: ColumnDef<Patient>[] = [
     header: "Teléfono",
     meta: {
       label: "Teléfono",
-      headerClassName: "w-[20%] min-w-[140px]",
-      cellClassName: "w-[20%] min-w-[140px]",
+      headerClassName: "w-[16%] whitespace-nowrap",
+      cellClassName: "w-[16%] whitespace-nowrap",
     },
     enableSorting: false,
   },
@@ -59,17 +68,53 @@ export const patientsTableColumns: ColumnDef<Patient>[] = [
     cell: ({ row }) => <span>{row.getValue("age") as number} años</span>,
     meta: {
       label: "Edad",
-      headerClassName: "w-[16%] min-w-[110px]",
-      cellClassName: "w-[16%] min-w-[110px]",
+      headerClassName: "w-[10%] whitespace-nowrap",
+      cellClassName: "w-[10%] whitespace-nowrap",
     },
+  },
+  {
+    id: "coverage",
+    accessorFn: (patient) => formatCoverage(patient.condition_coverage),
+    header: "Cobertura",
+    cell: ({ row }) => {
+      const coverage = row.getValue("coverage") as string;
+      const coverageClassName =
+        coverage === "Obra Social"
+          ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200"
+          : "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-900 dark:bg-teal-950/40 dark:text-teal-200";
+
+      return (
+        <Badge variant="outline" className={coverageClassName}>
+          {coverage}
+        </Badge>
+      );
+    },
+    meta: {
+      label: "Cobertura",
+      headerClassName: "w-[14%] whitespace-nowrap",
+      cellClassName: "w-[14%] whitespace-nowrap",
+    },
+    enableSorting: false,
   },
   {
     accessorKey: "locality",
     header: "Localidad",
+    cell: ({ row }) => <span className="block truncate">{row.original.locality || "—"}</span>,
     meta: {
       label: "Localidad",
-      headerClassName: "w-[24%] min-w-[160px]",
-      cellClassName: "w-[24%] min-w-[160px]",
+      headerClassName: "w-[25%]",
+      cellClassName: "w-[25%]",
+    },
+    enableSorting: false,
+  },
+  {
+    id: "created_at",
+    accessorFn: (patient) => formatCreatedAt(patient.created_at),
+    header: "Creado",
+    meta: {
+      label: "Creado",
+      headerClassName: "w-[15%] whitespace-nowrap",
+      cellClassName: "w-[15%] whitespace-nowrap",
     },
     enableSorting: false,
   },
