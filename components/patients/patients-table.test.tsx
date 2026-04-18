@@ -164,7 +164,7 @@ describe("Patients data table", () => {
     expect(getFirstNameCell()).toContain("Ana Acosta");
   });
 
-  it("renders Teléfono, Localidad y Edad columns", () => {
+  it("renders Teléfono, Edad, Cobertura, Creado y Localidad columns", () => {
     vi.mocked(usePatients).mockReturnValue({
       data: {
         data: [mockPatient],
@@ -180,9 +180,13 @@ describe("Patients data table", () => {
     render(<PatientsTableHarness />);
 
     expect(screen.getByRole("columnheader", { name: "Teléfono" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Localidad" })).toBeTruthy();
     expect(screen.getByRole("columnheader", { name: "Edad" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Cobertura" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Creado" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Localidad" })).toBeTruthy();
     expect(screen.getByText("3534184508")).toBeTruthy();
+    expect(screen.getByText("Particular")).toBeTruthy();
+    expect(screen.getByText("2026-01-01")).toBeTruthy();
     expect(screen.getByText("Buenos Aires")).toBeTruthy();
   });
 
