@@ -35,6 +35,7 @@ describe("useCreatePatient", () => {
       // Check required fields
       expect(result.current.formData.first_name).toBe("");
       expect(result.current.formData.last_name).toBe("");
+      expect(result.current.formData.dni).toBe("");
       expect(result.current.formData.date_of_birth).toBe("");
       expect(result.current.formData.gender).toBe("male");
       expect(result.current.formData.condition_coverage).toBe("health_insurance");
@@ -81,6 +82,7 @@ describe("useCreatePatient", () => {
       act(() => {
         result.current.methods.setField("first_name", "Juan");
         result.current.methods.setField("last_name", "Pérez");
+        result.current.methods.setField("dni", "30123456");
         result.current.methods.setField("date_of_birth", "1990-01-15");
         result.current.methods.setField("street", "Av. Rivadavia");
         result.current.methods.setField("street_number", "1234");
@@ -120,6 +122,7 @@ describe("useCreatePatient", () => {
       act(() => {
         result.current.methods.setField("first_name", "Juan");
         result.current.methods.setField("last_name", "Pérez");
+        result.current.methods.setField("dni", "30123456");
         result.current.methods.setField("date_of_birth", "1990-01-15");
         result.current.methods.setField("phone", "3534184508");
       });
@@ -138,6 +141,7 @@ describe("useCreatePatient", () => {
       const callData = mockMutate.mock.calls[0][0];
       expect(callData.first_name).toBe("Juan");
       expect(callData.last_name).toBe("Pérez");
+      expect(callData.dni).toBe("30123456");
       expect(callData.date_of_birth).toBe("1990-01-15");
       expect(callData.phone).toBe("3534184508");
     });

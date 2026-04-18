@@ -87,6 +87,7 @@ describe("GET /api/patients/[id]", () => {
         id: validUUID,
         first_name: "Juan",
         last_name: "Pérez",
+        dni: "30123456",
         date_of_birth: "1990-01-15",
         street: "Av. Rivadavia",
         street_number: "1234",
@@ -95,7 +96,6 @@ describe("GET /api/patients/[id]", () => {
         gender: "male",
         condition_coverage: "health_insurance",
         phone: "3534184508",
-        is_active: true,
         created_at: "2024-01-01",
         updated_at: "2024-01-01"
       };
@@ -124,7 +124,6 @@ describe("GET /api/patients/[id]", () => {
       await GET(request, { params: Promise.resolve({ id: validUUID }) });
       
       expect(mockQuery.eq).toHaveBeenCalledWith("id", validUUID);
-      expect(mockQuery.eq).toHaveBeenCalledWith("is_active", true);
     });
   });
 

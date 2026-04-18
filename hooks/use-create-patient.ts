@@ -28,6 +28,7 @@ async function createPatient(data: PatientFormData): Promise<Patient> {
 const initialFormData: PatientFormData = {
   first_name: "",
   last_name: "",
+  dni: "",
   date_of_birth: "",
   street: "",
   street_number: "",

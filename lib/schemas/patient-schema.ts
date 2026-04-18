@@ -3,6 +3,7 @@ import { z } from "zod";
 export const patientSchema = z.object({
   first_name: z.string().trim().min(1, "El nombre es requerido"),
   last_name: z.string().trim().min(1, "El apellido es requerido"),
+  dni: z.string().trim().min(1, "El DNI es requerido"),
   date_of_birth: z
     .string()
     .min(1, "La fecha de nacimiento es requerida")

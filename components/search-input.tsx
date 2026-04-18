@@ -11,7 +11,7 @@ export function SearchInput() {
   const initialValue = searchParams.get("search") || "";
   const [value, setValue] = useState(initialValue);
 
-  // Debounce search - wait 500ms after typing stops
+  // Debounce search - wait 300ms after typing stops
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
@@ -20,7 +20,7 @@ export function SearchInput() {
         params.set("search", value.trim());
       }
       router.push(`/patients?${params.toString()}`);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [value, router]);

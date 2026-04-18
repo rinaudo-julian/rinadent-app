@@ -5,6 +5,7 @@ import type { PatientFormData } from "./patient-schema";
 const validPatient: PatientFormData = {
   first_name: "Juan",
   last_name: "Pérez",
+  dni: "30123456",
   date_of_birth: "1990-01-15",
   gender: "male",
   condition_coverage: "health_insurance",
@@ -72,6 +73,13 @@ describe("patientSchema", () => {
       if (!result.success) {
         expect(result.error.issues[0].message).not.toBe("La fecha de nacimiento no puede ser futura");
       }
+    });
+  });
+
+  describe("dni validation", () => {
+    it("should reject empty dni", () => {
+      const result = patientSchema.safeParse({ ...validPatient, dni: "" });
+      expect(result.success).toBe(false);
     });
   });
 
@@ -164,8 +172,8 @@ describe("patientSchema", () => {
       const result = patientSchema.safeParse({});
       expect(result.success).toBe(false);
       if (!result.success) {
-        // Now only 6 required fields: first_name, last_name, date_of_birth, gender, condition_coverage, phone
-        expect(result.error.issues.length).toBeGreaterThanOrEqual(6);
+        // Required fields: first_name, last_name, dni, date_of_birth, gender, condition_coverage, phone
+        expect(result.error.issues.length).toBeGreaterThanOrEqual(7);
       }
     });
   });
