@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table/data-table";
 import { patientsTableColumns } from "@/components/patients/patients-table-columns";
 import { Plus } from "lucide-react";
 import { CreatePatientForm } from "@/components/patients/create-patient-form";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePatients } from "@/hooks/use-patients";
 import { usePagination } from "@/hooks/usePagination";
 
-export default function PatientsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+function PatientsTableSection() {
   const searchParams = useSearchParams();
   const { page, pageSize, setPage, setPageSize } = usePagination();
 
@@ -28,6 +28,25 @@ export default function PatientsPage() {
   const totalPages = data?.totalPages ?? 1;
 
   return (
+    <DataTable
+      columns={patientsTableColumns}
+      data={patients}
+      pagination={{
+        page,
+        pageSize,
+        totalItems: total,
+        totalPages,
+        onPageChange: setPage,
+        onPageSizeChange: setPageSize,
+      }}
+    />
+  );
+}
+
+export default function PatientsPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  return (
     <div>
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center justify-between">
@@ -39,18 +58,16 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      <DataTable
-        columns={patientsTableColumns}
-        data={patients}
-        pagination={{
-          page,
-          pageSize,
-          totalItems: total,
-          totalPages,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
-        }}
-      />
+      <Suspense
+        fallback={
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full max-w-sm" />
+            <Skeleton className="h-[360px] w-full" />
+          </div>
+        }
+      >
+        <PatientsTableSection />
+      </Suspense>
 
       <CreatePatientForm open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </div>
