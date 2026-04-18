@@ -9,12 +9,13 @@ WHERE dni IS NULL;
 ALTER TABLE patients
   ALTER COLUMN dni SET NOT NULL;
 
+DROP POLICY IF EXISTS "Allow authenticated reads active patients" ON patients;
+DROP POLICY IF EXISTS "Allow authenticated reads patients" ON patients;
+
 DROP INDEX IF EXISTS idx_patients_active;
 
 ALTER TABLE patients
   DROP COLUMN IF EXISTS is_active;
-
-DROP POLICY IF EXISTS "Allow authenticated reads active patients" ON patients;
 
 CREATE POLICY "Allow authenticated reads patients" ON patients
   FOR SELECT TO authenticated USING (true);
