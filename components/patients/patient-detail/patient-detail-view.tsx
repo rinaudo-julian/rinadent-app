@@ -29,7 +29,7 @@ export function PatientDetailView({ patientId }: PatientDetailViewProps) {
       </TabsContent>
       
       <TabsContent value="estudios">
-        <EstudiosTab />
+        <EstudiosTab patientId={patientId} />
       </TabsContent>
       
       <TabsContent value="tratamientos">
