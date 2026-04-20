@@ -12,7 +12,12 @@ vi.mock("./odontograma-tab", () => ({
 }));
 
 vi.mock("./estudios-tab", () => ({
-  EstudiosTab: () => <h3>Estudios</h3>,
+  EstudiosTab: ({ patientId }: { patientId: string }) => (
+    <div>
+      <h3>Estudios</h3>
+      <p>Patient {patientId}</p>
+    </div>
+  ),
 }));
 
 vi.mock("./tratamientos-tab", () => ({
@@ -46,6 +51,7 @@ describe("PatientDetailView", () => {
     await user.click(screen.getByRole("tab", { name: "Estudios" }));
     const estudiosPanel = screen.getByRole("tabpanel", { name: "Estudios" });
     expect(within(estudiosPanel).getByRole("heading", { name: "Estudios" })).toBeTruthy();
+    expect(within(estudiosPanel).getByText("Patient 123")).toBeTruthy();
 
     await user.click(screen.getByRole("tab", { name: "Tratamientos" }));
     const tratamientosPanel = screen.getByRole("tabpanel", { name: "Tratamientos" });
