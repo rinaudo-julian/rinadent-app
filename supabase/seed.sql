@@ -21,3 +21,32 @@ INSERT INTO patients (first_name, last_name, dni, date_of_birth, street, street_
 ('Carolina', 'Reyes', '30100019', '2010-09-14', 'Av. San Martín', '4200', 'Ciudad Autónoma de Buenos Aires', '1436', 'female', 'health_insurance', '11-9012-3456', NOW() - INTERVAL '19 hours'),
 ('Luis', 'Núñez', '30100020', '1955-01-30', 'Calle Perú', '600', 'Ciudad Autónoma de Buenos Aires', '1014', 'male', 'private', '11-0123-4567', NOW() - INTERVAL '20 hours')
 ON CONFLICT DO NOTHING;
+
+-- Seed treatments data
+INSERT INTO treatments (code, name, price) VALUES
+('TRAT-001', 'Consulta odontológica', 12000.00),
+('TRAT-002', 'Limpieza dental', 18500.00),
+('TRAT-003', 'Fluorización', 14000.00),
+('TRAT-004', 'Sellado de fosas y fisuras', 21000.00),
+('TRAT-005', 'Obturación simple', 26000.00),
+('TRAT-006', 'Obturación compuesta', 31500.00),
+('TRAT-007', 'Endodoncia unirradicular', 64000.00),
+('TRAT-008', 'Endodoncia multirradicular', 89000.00),
+('TRAT-009', 'Extracción simple', 30000.00),
+('TRAT-010', 'Extracción compleja', 47000.00),
+('TRAT-011', 'Cirugía de tercer molar', 98000.00),
+('TRAT-012', 'Curetaje periodontal', 52000.00),
+('TRAT-013', 'Raspaje y alisado radicular', 61000.00),
+('TRAT-014', 'Placa miorrelajante', 76000.00),
+('TRAT-015', 'Blanqueamiento dental', 115000.00),
+('TRAT-016', 'Corona provisoria', 68000.00),
+('TRAT-017', 'Corona definitiva', 142000.00),
+('TRAT-018', 'Puente fijo por pieza', 128000.00),
+('TRAT-019', 'Prótesis parcial removible', 185000.00),
+('TRAT-020', 'Prótesis completa', 240000.00),
+('TRAT-021', 'Implante unitario', 395000.00),
+('TRAT-022', 'Radiografía periapical', 9500.00),
+('TRAT-023', 'Radiografía panorámica', 22000.00),
+('TRAT-024', 'Tomografía CBCT', 78000.00),
+('TRAT-025', 'Control postoperatorio', 11000.00)
+ON CONFLICT (code) DO NOTHING;

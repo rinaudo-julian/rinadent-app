@@ -89,23 +89,19 @@ CREATE TABLE odontograms (
 );
 
 CREATE TABLE treatments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code TEXT UNIQUE NOT NULL,
+  code TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  description TEXT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  price NUMERIC(10,2) NOT NULL CHECK (price >= 0)
 );
 
 CREATE TABLE patient_treatments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID REFERENCES patients(id) ON DELETE CASCADE,
-  treatment_id UUID REFERENCES treatments(id) ON DELETE CASCADE,
+  treatment_code TEXT REFERENCES treatments(code) ON DELETE RESTRICT,
   registered_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(patient_id, treatment_id)
+  UNIQUE(patient_id, treatment_code)
 );
 
 -- ============================================================================
@@ -115,6 +111,7 @@ CREATE TABLE patient_treatments (
 CREATE INDEX idx_patients_active ON patients(is_active) WHERE is_active = true;
 CREATE INDEX idx_studies_patient ON studies(patient_id);
 CREATE INDEX idx_studies_date ON studies(study_date);
+CREATE INDEX idx_treatments_name ON treatments(name);
 CREATE INDEX idx_patient_treatments_patient ON patient_treatments(patient_id);
 ```
 
@@ -290,14 +287,12 @@ export function useTreatments(patientId: string) { ... }
 | `POST` | `/api/patients/[id]/odontogram` | Create odontogram for patient |
 | `PUT` | `/api/patients/[id]/odontogram` | Update odontogram |
 
-### Treatments (Catalog)
+### Treatments (Sidebar Pricing)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/treatments` | List all active treatments |
-| `POST` | `/api/treatments` | Create new treatment |
-| `PUT` | `/api/treatments/[id]` | Update treatment |
-| `DELETE` | `/api/treatments/[id]` | Soft delete |
+| `GET` | `/api/treatments` | List `code`, `name`, `price` for `/treatments` view |
+| `PUT` | `/api/treatments/bulk` | Atomic bulk update using `unit` or `percentage` mode |
 
 ### Patient Treatments
 
@@ -545,23 +540,25 @@ export function useTreatments(patientId: string) { ... }
 
 ---
 
-### 5.7 Treatments Catalog (`/treatments/catalog`)
+### 5.7 Treatments Sidebar View (`/treatments`)
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  🦷 RINADENT              Catálogo de Tratamientos      │
+│  🦷 RINADENT                 Tratamientos               │
 ├────────────┬─────────────────────────────────────────────┤
-│            │  [+ Nuevo Tratamiento]                    │
+│            │  [Actualizar precios]                      │
 │  Pacientes │                                           │
-│  ─────────│  ┌──────┬──────────────┬────────────────┐  │
-│  Catálogo  │  │Código│ Nombre       │ Descripción    │  │
-│            │  ├──────┼──────────────┼────────────────┤  │
-│            │  │ 001  │ Limpieza     │ Profilaxis     │  │
-│            │  │ 002  │ Obturación   │ Restauración   │  │
-│            │  │ 003  │ Endodoncia   │ Canal          │  │
-│            │  │ 004  │ Extracción   │ Extracción    │  │
-│            │  └──────┴──────────────┴────────────────┘  │
+│  ─────────│  ┌────────┬──────────────┬───────────────┐  │
+│  Trata-    │  │Código  │ Tipo         │ Precio (ARS)  │  │
+│  mientos   │  ├────────┼──────────────┼───────────────┤  │
+│            │  │ 001    │ Limpieza     │ $ 1.000,00    │  │
+│            │  │ 002    │ Obturación   │ $ 25.000,00   │  │
+│            │  └────────┴──────────────┴───────────────┘  │
 │            │                                           │
+│            │  Modal actualización masiva:              │
+│            │  - mode: unit | percentage                 │
+│            │  - value >= 0                              │
+│            │  - transacción all-or-nothing              │
 └────────────┴─────────────────────────────────────────────┘
 ```
 
@@ -618,5 +615,14 @@ export function useTreatments(patientId: string) { ... }
 5. Start PHASE 1: Patient Management
 
 **Note**: Accounting module removed. Will be designed later with better planning.
+
+---
+
+## QA Checklist (Treatments Bulk Price)
+
+- [ ] Unit mode transaction: verify `100 + 1000 = 1100` on 1+ selected rows.
+- [ ] Percentage mode transaction: verify `1000 + 3% = 1030` with DB rounding `ROUND(price * (1 + p/100.0), 2)`.
+- [ ] Rollback behavior: include one invalid code and confirm the whole batch is rolled back (no partial updates).
+- [ ] Validation behavior: negative value returns `400` and API does not execute bulk routine.
 
 Do you confirm this technical design to proceed with implementation?
