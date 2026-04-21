@@ -19,7 +19,7 @@ import {
   SidebarRail,
   SidebarFooter
 } from "@/components/ui/sidebar";
-import { GalleryVerticalEnd, Users, LayoutDashboard } from "lucide-react";
+import { GalleryVerticalEnd, Users, LayoutDashboard, DollarSign } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import type { LucideIcon } from "lucide-react";
 
@@ -56,6 +56,11 @@ const data: { navMain: NavGroup[] } = {
           title: "Pacientes",
           url: "/patients",
           icon: Users
+        },
+        {
+          title: "Tratamientos",
+          url: "/treatments",
+          icon: DollarSign
         }
       ]
     }
