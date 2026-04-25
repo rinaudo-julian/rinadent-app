@@ -619,6 +619,14 @@ function mapEventRowToClinicalEvent(event: OdontogramEventRow): ClinicalEvent {
   };
 }
 
+function resolveApiUrl(path: string) {
+  if (typeof window === "undefined") {
+    return path;
+  }
+
+  return new URL(path, window.location.origin).toString();
+}
+
 function hasOdontogramContent(state: Record<number, ToothState>) {
   return Object.values(state).some((tooth) => {
     if (tooth.tooth !== "none") {
@@ -658,7 +666,9 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
 
   useEffect(() => {
     const loadOdontogram = async () => {
-      const response = await fetch(`/api/patients/${patientId}/odontogram`);
+      const response = await fetch(
+        resolveApiUrl(`/api/patients/${patientId}/odontogram`)
+      );
 
       if (!response.ok) {
         return;
@@ -799,7 +809,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
   const reset = async () => {
     setIsResetting(true);
     try {
-      const response = await fetch(`/api/patients/${patientId}/odontogram`, {
+      const response = await fetch(resolveApiUrl(`/api/patients/${patientId}/odontogram`), {
         method: "DELETE"
       });
 
@@ -827,7 +837,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/patients/${patientId}/odontogram`, {
+      const response = await fetch(resolveApiUrl(`/api/patients/${patientId}/odontogram`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
