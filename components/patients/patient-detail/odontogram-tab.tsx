@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import {
   Tooltip,
@@ -22,36 +24,27 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  odontogramSnapshotSchema,
+  type EventAction,
+  type OdontogramSnapshot,
+  type SurfaceKey,
+  type SurfaceState,
+  type ToothState as ToothCondition
+} from "@/lib/schemas/odontogram-schema";
 
-type SurfaceCondition = "sano" | "planificado" | "existente" | "realizado";
-type ToothCondition =
-  | "none"
-  | "extraccion-planificada"
-  | "extraccion-realizada"
-  | "ausente";
-type SurfaceKey = "oclusal" | "vestibular" | "mesial" | "distal" | "lingual";
 type Tool =
-  | "sano"
-  | "planificado"
-  | "existente"
-  | "realizado"
-  | "extraccion"
-  | "ausente";
+  | "healthy"
+  | "planned"
+  | "existing"
+  | "completed"
+  | "extraction"
+  | "missing";
 
 interface ToothState {
-  surfaces: Record<SurfaceKey, SurfaceCondition>;
+  surfaces: Record<SurfaceKey, SurfaceState>;
   tooth: ToothCondition;
 }
-
-type EventAction =
-  | "planificado"
-  | "existente"
-  | "realizado"
-  | "extraccion-planificada"
-  | "extraccion-realizada"
-  | "ausente"
-  | "limpieza-cara"
-  | "limpieza-diente";
 
 interface ClinicalEvent {
   id: string;
@@ -68,25 +61,25 @@ const COLOR_DONE = "var(--condition-done)";
 const COLOR_ABSENT = "var(--condition-absent)";
 
 const ACTION_COLORS: Record<EventAction, string> = {
-  planificado: COLOR_PLANNED,
-  existente: COLOR_EXISTING,
-  realizado: COLOR_DONE,
-  "extraccion-planificada": COLOR_PLANNED,
-  "extraccion-realizada": COLOR_DONE,
-  ausente: COLOR_ABSENT,
-  "limpieza-cara": "var(--muted-foreground)",
-  "limpieza-diente": "var(--muted-foreground)"
+  planned: COLOR_PLANNED,
+  existing: COLOR_EXISTING,
+  completed: COLOR_DONE,
+  "planned-extraction": COLOR_PLANNED,
+  "completed-extraction": COLOR_DONE,
+  missing: COLOR_ABSENT,
+  "clear-surface": "var(--muted-foreground)",
+  "clear-tooth": "var(--muted-foreground)"
 };
 
 const ACTION_LABELS: Record<EventAction, string> = {
-  planificado: "Tratamiento planificado",
-  existente: "Hallazgo previo (trae hecho)",
-  realizado: "Tratamiento realizado",
-  "extraccion-planificada": "Extracción planificada",
-  "extraccion-realizada": "Extracción realizada",
-  ausente: "Pieza marcada como ausente",
-  "limpieza-cara": "Hallazgo removido",
-  "limpieza-diente": "Estado de pieza removido"
+  planned: "Tratamiento planificado",
+  existing: "Hallazgo previo (trae hecho)",
+  completed: "Tratamiento realizado",
+  "planned-extraction": "Extracción planificada",
+  "completed-extraction": "Extracción realizada",
+  missing: "Pieza marcada como ausente",
+  "clear-surface": "Hallazgo removido",
+  "clear-tooth": "Estado de pieza removido"
 };
 
 const SURFACE_KEYS: SurfaceKey[] = [
@@ -105,20 +98,27 @@ const SURFACE_LABELS: Record<SurfaceKey, string> = {
   lingual: "Palatino/Lingual"
 };
 
-const CONDITION_COLORS: Record<SurfaceCondition, string> = {
-  sano: "transparent",
-  planificado: COLOR_PLANNED,
-  existente: COLOR_EXISTING,
-  realizado: COLOR_DONE
+const SURFACE_STATE_LABELS: Record<SurfaceState, string> = {
+  healthy: "Sano",
+  planned: "Planificado",
+  existing: "Pre-existente",
+  completed: "Realizado"
+};
+
+const CONDITION_COLORS: Record<SurfaceState, string> = {
+  healthy: "transparent",
+  planned: COLOR_PLANNED,
+  existing: COLOR_EXISTING,
+  completed: COLOR_DONE
 };
 
 const TOOL_COLORS: Record<Tool, string> = {
-  sano: "var(--tooth-stroke)",
-  planificado: COLOR_PLANNED,
-  existente: COLOR_EXISTING,
-  realizado: COLOR_DONE,
-  extraccion: COLOR_PLANNED,
-  ausente: COLOR_ABSENT
+  healthy: "var(--tooth-stroke)",
+  planned: COLOR_PLANNED,
+  existing: COLOR_EXISTING,
+  completed: COLOR_DONE,
+  extraction: COLOR_PLANNED,
+  missing: COLOR_ABSENT
 };
 
 const TOOTH_NAMES: Record<number, string> = {
@@ -139,22 +139,15 @@ const PERMANENT = {
   lowerLeft: [31, 32, 33, 34, 35, 36, 37, 38]
 };
 
-const PRIMARY = {
-  upperRight: [55, 54, 53, 52, 51],
-  upperLeft: [61, 62, 63, 64, 65],
-  lowerRight: [85, 84, 83, 82, 81],
-  lowerLeft: [71, 72, 73, 74, 75]
-};
-
 function defaultTooth(): ToothState {
   return {
     tooth: "none",
     surfaces: {
-      oclusal: "sano",
-      vestibular: "sano",
-      mesial: "sano",
-      distal: "sano",
-      lingual: "sano"
+      oclusal: "healthy",
+      vestibular: "healthy",
+      mesial: "healthy",
+      distal: "healthy",
+      lingual: "healthy"
     }
   };
 }
@@ -178,19 +171,18 @@ function Tooth({
 }: ToothProps) {
   const [hovered, setHovered] = useState(false);
   const [hoveredSurface, setHoveredSurface] = useState<SurfaceKey | null>(null);
-  const hasPlannedExtraction = state.tooth === "extraccion-planificada";
-  // 'realizado' actúa sobre el diente (no sobre cara) si hay una extracción planificada
-  const realizadoOnExtraction = tool === "realizado" && hasPlannedExtraction;
+  const hasPlannedExtraction = state.tooth === "planned-extraction";
+  // 'completed' acts on tooth-level if extraction is already planned
+  const completedOnExtraction = tool === "completed" && hasPlannedExtraction;
   const isToothTool =
-    tool === "extraccion" || tool === "ausente" || realizadoOnExtraction;
+    tool === "extraction" || tool === "missing" || completedOnExtraction;
   const isSurfaceTool =
-    (tool === "planificado" || tool === "existente" || tool === "realizado") &&
-    !realizadoOnExtraction;
-  const isEraser = tool === "sano";
+    (tool === "planned" || tool === "existing" || tool === "completed") &&
+    !completedOnExtraction;
+  const isEraser = tool === "healthy";
 
-  const ausente = state.tooth === "ausente";
+  const isMissingTooth = state.tooth === "missing";
   const size = 44;
-  const c = size / 2;
   const i = 12;
   const inner = `${i},${i} ${size - i},${i} ${size - i},${size - i} ${i},${size - i}`;
 
@@ -220,21 +212,22 @@ function Tooth({
 
   const toothName = TOOTH_NAMES[number % 10] ?? "Diente";
 
-  const summary = SURFACE_KEYS.filter((s) => state.surfaces[s] !== "sano")
-    .map((s) => `${SURFACE_LABELS[s]}: ${state.surfaces[s]}`)
+  const summary = SURFACE_KEYS.filter((s) => state.surfaces[s] !== "healthy")
+    .map((s) => `${SURFACE_LABELS[s]}: ${SURFACE_STATE_LABELS[state.surfaces[s]]}`)
     .join(" · ");
 
-  // Tooth-level preview (extraccion/ausente/realizado-on-extraction hover sobre el diente)
-  const showToothPreview = isToothTool && hovered && !ausente;
+  // Tooth-level preview (extraction/missing/completed-on-extraction hover on tooth)
+  const showToothPreview = isToothTool && hovered && !isMissingTooth;
   const previewToothColor =
-    tool === "ausente"
+    tool === "missing"
       ? COLOR_ABSENT
-      : realizadoOnExtraction
+      : completedOnExtraction
         ? COLOR_DONE
         : COLOR_PLANNED;
 
-  // Disabled if absent (unless eraser/ausente tool to undo)
-  const interactionsLocked = ausente && tool !== "sano" && tool !== "ausente";
+  // Disabled if missing (unless eraser/missing tool to undo)
+  const interactionsLocked =
+    isMissingTooth && tool !== "healthy" && tool !== "missing";
 
   const handleSvgClick = () => {
     if (isToothTool) onToothClick();
@@ -260,7 +253,10 @@ function Tooth({
                 hovered && !interactionsLocked && "ring-1 ring-foreground/20",
                 showToothPreview && "ring-2",
                 isToothTool && !interactionsLocked && "cursor-pointer",
-                ausente && tool !== "sano" && tool !== "ausente" && "opacity-60"
+                isMissingTooth &&
+                  tool !== "healthy" &&
+                  tool !== "missing" &&
+                  "opacity-60"
               )}
               style={{
                 background: showToothPreview
@@ -283,7 +279,7 @@ function Tooth({
 
                 if (isSurfaceTool && isHoveredSurface && !interactionsLocked) {
                   const previewColor = TOOL_COLORS[tool];
-                  if (cond === "sano") {
+                  if (cond === "healthy") {
                     // soft preview tint
                     fill = `color-mix(in oklab, ${previewColor} 45%, transparent)`;
                   }
@@ -294,8 +290,8 @@ function Tooth({
                 if (
                   isEraser &&
                   isHoveredSurface &&
-                  cond !== "sano" &&
-                  !ausente
+                  cond !== "healthy" &&
+                  !isMissingTooth
                 ) {
                   // eraser preview: dashed darker stroke
                   strokeColor = "var(--foreground)";
@@ -310,7 +306,7 @@ function Tooth({
                     stroke={strokeColor}
                     strokeWidth={strokeW}
                     strokeDasharray={
-                      isEraser && isHoveredSurface && cond !== "sano"
+                      isEraser && isHoveredSurface && cond !== "healthy"
                         ? "2 1.5"
                         : undefined
                     }
@@ -332,11 +328,11 @@ function Tooth({
                   />
                 );
               })}
-              {(state.tooth === "extraccion-planificada" ||
-                state.tooth === "extraccion-realizada") &&
+              {(state.tooth === "planned-extraction" ||
+                state.tooth === "completed-extraction") &&
                 (() => {
                   const xColor =
-                    state.tooth === "extraccion-realizada"
+                    state.tooth === "completed-extraction"
                       ? COLOR_DONE
                       : COLOR_PLANNED;
                   // diagonal "/" from bottom-left to top-right
@@ -352,7 +348,7 @@ function Tooth({
                     />
                   );
                 })()}
-              {ausente && (
+              {isMissingTooth && (
                 <>
                   <line
                     x1={4}
@@ -376,9 +372,9 @@ function Tooth({
               )}
               {/* Tooth-level preview overlay marks */}
               {showToothPreview &&
-                tool === "extraccion" &&
-                state.tooth !== "extraccion-planificada" &&
-                state.tooth !== "extraccion-realizada" && (
+                tool === "extraction" &&
+                state.tooth !== "planned-extraction" &&
+                state.tooth !== "completed-extraction" && (
                   <line
                     x1={2}
                     y1={size - 2}
@@ -391,7 +387,7 @@ function Tooth({
                     strokeLinecap="round"
                   />
                 )}
-              {showToothPreview && realizadoOnExtraction && (
+              {showToothPreview && completedOnExtraction && (
                 <line
                   x1={2}
                   y1={size - 2}
@@ -403,7 +399,7 @@ function Tooth({
                   strokeLinecap="round"
                 />
               )}
-              {showToothPreview && tool === "ausente" && (
+              {showToothPreview && tool === "missing" && (
                 <>
                   <line
                     x1={4}
@@ -436,11 +432,11 @@ function Tooth({
             <div className="text-muted-foreground">{toothName}</div>
             {state.tooth !== "none" && (
               <div className="capitalize text-foreground/80 mt-1">
-                {state.tooth === "extraccion-planificada" &&
+                {state.tooth === "planned-extraction" &&
                   "Extracción planificada"}
-                {state.tooth === "extraccion-realizada" &&
+                {state.tooth === "completed-extraction" &&
                   "Extracción realizada"}
-                {state.tooth === "ausente" && "Ausente"}
+                {state.tooth === "missing" && "Ausente"}
               </div>
             )}
             {summary && <div className="mt-1 max-w-[200px]">{summary}</div>}
@@ -492,30 +488,30 @@ type LegendIcon = "square" | "diagonal" | "cross";
 const LEGEND: { tool: Tool; label: string; color: string; icon: LegendIcon }[] =
   [
     {
-      tool: "planificado",
+      tool: "planned",
       label: "Carie",
       color: COLOR_PLANNED,
       icon: "square"
     },
     {
-      tool: "existente",
+      tool: "existing",
       label: "Pre-existente",
       color: COLOR_EXISTING,
       icon: "square"
     },
     {
-      tool: "realizado",
+      tool: "completed",
       label: "Realizado",
       color: COLOR_DONE,
       icon: "square"
     },
     {
-      tool: "extraccion",
+      tool: "extraction",
       label: "Extracción",
       color: COLOR_PLANNED,
       icon: "diagonal"
     },
-    { tool: "ausente", label: "Ausente", color: COLOR_ABSENT, icon: "cross" }
+    { tool: "missing", label: "Ausente", color: COLOR_ABSENT, icon: "cross" }
   ];
 
 function LegendSwatch({
@@ -577,13 +573,62 @@ function LegendSwatch({
   );
 }
 
-export function OdontogramTab() {
+interface OdontogramEventRow {
+  id: string;
+  occurred_at: string;
+  tooth: number;
+  surface: SurfaceKey | null;
+  action: EventAction;
+}
+
+function toSnapshot(data: Record<number, ToothState>): OdontogramSnapshot {
+  const teeth: OdontogramSnapshot["teeth"] = {};
+
+  Object.entries(data).forEach(([tooth, value]) => {
+    teeth[tooth] = {
+      tooth: value.tooth,
+      surfaces: value.surfaces
+    };
+  });
+
+  return { teeth };
+}
+
+function fromSnapshot(snapshot: OdontogramSnapshot | null): Record<number, ToothState> {
+  if (!snapshot) return {};
+
+  return Object.entries(snapshot.teeth).reduce<Record<number, ToothState>>(
+    (acc, [tooth, value]) => {
+      acc[Number(tooth)] = value;
+      return acc;
+    },
+    {}
+  );
+}
+
+function mapEventRowToClinicalEvent(event: OdontogramEventRow): ClinicalEvent {
+  return {
+    id: event.id,
+    timestamp: new Date(event.occurred_at).getTime(),
+    tooth: event.tooth,
+    surface: event.surface ?? undefined,
+    action: event.action,
+    label: ACTION_LABELS[event.action]
+  };
+}
+
+interface OdontogramTabProps {
+  patientId: string;
+}
+
+export function OdontogramTab({ patientId }: OdontogramTabProps) {
   const [data, setData] = useState<Record<number, ToothState>>({});
   const [savedData, setSavedData] = useState<Record<number, ToothState>>({});
-  const [tool, setTool] = useState<Tool>("planificado");
+  const [tool, setTool] = useState<Tool>("planned");
   const [events, setEvents] = useState<ClinicalEvent[]>([]);
   const [pendingEvents, setPendingEvents] = useState<ClinicalEvent[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const historyRef = useRef<HTMLDivElement | null>(null);
 
   // Click outside the history closes any expanded detail
@@ -598,6 +643,40 @@ export function OdontogramTab() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  useEffect(() => {
+    const loadOdontogram = async () => {
+      const response = await fetch(`/api/patients/${patientId}/odontogram`);
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        snapshot: unknown;
+        events: OdontogramEventRow[];
+      };
+
+      const parsedSnapshot =
+        payload.snapshot === null
+          ? null
+          : odontogramSnapshotSchema.safeParse(payload.snapshot);
+
+      if (parsedSnapshot !== null && !parsedSnapshot.success) {
+        return;
+      }
+
+      const nextData = fromSnapshot(
+        parsedSnapshot === null ? null : parsedSnapshot.data
+      );
+      setData(nextData);
+      setSavedData(nextData);
+      setEvents((payload.events ?? []).map(mapEventRowToClinicalEvent));
+      setPendingEvents([]);
+    };
+
+    void loadOdontogram();
+  }, [patientId]);
+
   const layout = PERMANENT;
 
   // Registra un evento pendiente, pero si ese cambio devuelve el target a su
@@ -605,11 +684,11 @@ export function OdontogramTab() {
   // sin agregar uno nuevo (cancelan el cambio en lugar de sumar).
   const logEvent = (
     e: Omit<ClinicalEvent, "id" | "timestamp" | "label">,
-    nextTargetState: SurfaceCondition | ToothCondition
+    nextTargetState: SurfaceState | ToothCondition
   ) => {
     const targetKey = e.surface ? `s:${e.tooth}:${e.surface}` : `t:${e.tooth}`;
     const savedTooth = savedData[e.tooth] ?? defaultTooth();
-    const savedValue: SurfaceCondition | ToothCondition = e.surface
+    const savedValue: SurfaceState | ToothCondition = e.surface
       ? savedTooth.surfaces[e.surface]
       : savedTooth.tooth;
 
@@ -635,26 +714,24 @@ export function OdontogramTab() {
 
   const handleSurface = (n: number, s: SurfaceKey) => {
     const t = data[n] ?? defaultTooth();
-    if (t.tooth === "ausente" && tool !== "sano" && tool !== "ausente") return;
+    if (t.tooth === "missing" && tool !== "healthy" && tool !== "missing") {
+      return;
+    }
 
-    if (tool === "sano") {
-      if (t.surfaces[s] === "sano") return;
-      logEvent({ tooth: n, surface: s, action: "limpieza-cara" }, "sano");
+    if (tool === "healthy") {
+      if (t.surfaces[s] === "healthy") return;
+      logEvent({ tooth: n, surface: s, action: "clear-surface" }, "healthy");
       setData({
         ...data,
-        [n]: { ...t, surfaces: { ...t.surfaces, [s]: "sano" } }
+        [n]: { ...t, surfaces: { ...t.surfaces, [s]: "healthy" } }
       });
       return;
     }
 
-    if (
-      tool === "planificado" ||
-      tool === "existente" ||
-      tool === "realizado"
-    ) {
+    if (tool === "planned" || tool === "existing" || tool === "completed") {
       const current = t.surfaces[s];
-      const next: SurfaceCondition = current === tool ? "sano" : tool;
-      const action: EventAction = next === "sano" ? "limpieza-cara" : next;
+      const next: SurfaceState = current === tool ? "healthy" : tool;
+      const action: EventAction = next === "healthy" ? "clear-surface" : next;
       logEvent({ tooth: n, surface: s, action }, next);
       setData({
         ...data,
@@ -666,41 +743,41 @@ export function OdontogramTab() {
   const handleToothClick = (n: number) => {
     const t = data[n] ?? defaultTooth();
 
-    if (tool === "sano") {
+    if (tool === "healthy") {
       if (t.tooth === "none") return;
-      logEvent({ tooth: n, action: "limpieza-diente" }, "none");
+      logEvent({ tooth: n, action: "clear-tooth" }, "none");
       setData({ ...data, [n]: { ...t, tooth: "none" } });
       return;
     }
-    if (tool === "extraccion") {
+    if (tool === "extraction") {
       let next: ToothCondition;
       let action: EventAction;
-      if (t.tooth === "extraccion-planificada") {
+      if (t.tooth === "planned-extraction") {
         next = "none";
-        action = "limpieza-diente";
-      } else if (t.tooth === "none" || t.tooth === "ausente") {
-        next = "extraccion-planificada";
-        action = "extraccion-planificada";
+        action = "clear-tooth";
+      } else if (t.tooth === "none" || t.tooth === "missing") {
+        next = "planned-extraction";
+        action = "planned-extraction";
       } else {
         next = "none";
-        action = "limpieza-diente";
+        action = "clear-tooth";
       }
       logEvent({ tooth: n, action }, next);
       setData({ ...data, [n]: { ...t, tooth: next } });
       return;
     }
-    if (tool === "ausente") {
-      const next: ToothCondition = t.tooth === "ausente" ? "none" : "ausente";
+    if (tool === "missing") {
+      const next: ToothCondition = t.tooth === "missing" ? "none" : "missing";
       logEvent(
-        { tooth: n, action: next === "none" ? "limpieza-diente" : "ausente" },
+        { tooth: n, action: next === "none" ? "clear-tooth" : "missing" },
         next
       );
       setData({ ...data, [n]: { ...t, tooth: next } });
       return;
     }
-    if (tool === "realizado" && t.tooth === "extraccion-planificada") {
-      const next: ToothCondition = "extraccion-realizada";
-      logEvent({ tooth: n, action: "extraccion-realizada" }, next);
+    if (tool === "completed" && t.tooth === "planned-extraction") {
+      const next: ToothCondition = "completed-extraction";
+      logEvent({ tooth: n, action: "completed-extraction" }, next);
       setData({ ...data, [n]: { ...t, tooth: next } });
     }
   };
@@ -712,11 +789,44 @@ export function OdontogramTab() {
     setPendingEvents([]);
   };
 
-  const save = () => {
+  const save = async () => {
     if (pendingEvents.length === 0) return;
-    setEvents((prev) => [...pendingEvents, ...prev]);
-    setPendingEvents([]);
-    setSavedData(data);
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/patients/${patientId}/odontogram`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          snapshot: toSnapshot(data),
+          events: pendingEvents.map((event) => ({
+            tooth: event.tooth,
+            surface: event.surface,
+            action: event.action,
+            timestamp: event.timestamp
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        snapshot: OdontogramSnapshot;
+        events: OdontogramEventRow[];
+      };
+
+      const nextData = fromSnapshot(payload.snapshot);
+      setData(nextData);
+      setSavedData(nextData);
+      setEvents((payload.events ?? []).map(mapEventRowToClinicalEvent));
+      setPendingEvents([]);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const discardChanges = () => {
@@ -726,12 +836,12 @@ export function OdontogramTab() {
   };
 
   const toolHint: Record<Tool, string> = {
-    sano: "Click para limpiar el estado de una cara o diente",
-    planificado: "Azul · marca un tratamiento a realizar",
-    existente: "Rojo · marca un hallazgo previo del paciente",
-    realizado: "Verde · marca un tratamiento ya realizado",
-    extraccion: "Marca extracción planificada · click de nuevo para borrar",
-    ausente: "Marca el diente como ausente"
+    healthy: "Click para limpiar el estado de una cara o diente",
+    planned: "Azul · marca un tratamiento a realizar",
+    existing: "Rojo · marca un hallazgo previo del paciente",
+    completed: "Verde · marca un tratamiento ya realizado",
+    extraction: "Marca extracción planificada · click de nuevo para borrar",
+    missing: "Marca el diente como ausente"
   };
 
   return (
@@ -760,10 +870,10 @@ export function OdontogramTab() {
                 variant="default"
                 size="sm"
                 onClick={save}
-                disabled={pendingEvents.length === 0}
+                disabled={pendingEvents.length === 0 || isSaving}
                 className="text-sm h-9"
               >
-                Guardar
+                {isSaving ? "Guardando..." : "Guardar"}
               </Button>
               <Button
                 variant="ghost"

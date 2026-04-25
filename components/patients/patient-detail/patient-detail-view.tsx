@@ -25,7 +25,7 @@ export function PatientDetailView({ patientId }: PatientDetailViewProps) {
       </TabsContent>
 
       <TabsContent value="odontograma">
-        <OdontogramTab />
+        <OdontogramTab patientId={patientId} />
       </TabsContent>
 
       <TabsContent value="estudios">
