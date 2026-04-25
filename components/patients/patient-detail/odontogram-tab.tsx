@@ -666,35 +666,40 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
 
   useEffect(() => {
     const loadOdontogram = async () => {
-      const response = await fetch(
-        resolveApiUrl(`/api/patients/${patientId}/odontogram`)
-      );
+      try {
+        const response = await fetch(
+          resolveApiUrl(`/api/patients/${patientId}/odontogram`)
+        );
 
-      if (!response.ok) {
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          snapshot: unknown;
+          events: OdontogramEventRow[];
+        };
+
+        const parsedSnapshot =
+          payload.snapshot === null
+            ? null
+            : odontogramSnapshotSchema.safeParse(payload.snapshot);
+
+        if (parsedSnapshot !== null && !parsedSnapshot.success) {
+          return;
+        }
+
+        const nextData = fromSnapshot(
+          parsedSnapshot === null ? null : parsedSnapshot.data
+        );
+        setData(nextData);
+        setSavedData(nextData);
+        setEvents((payload.events ?? []).map(mapEventRowToClinicalEvent));
+        setPendingEvents([]);
+      } catch {
+        // Keep UI usable when API is unavailable (e.g. isolated tests).
         return;
       }
-
-      const payload = (await response.json()) as {
-        snapshot: unknown;
-        events: OdontogramEventRow[];
-      };
-
-      const parsedSnapshot =
-        payload.snapshot === null
-          ? null
-          : odontogramSnapshotSchema.safeParse(payload.snapshot);
-
-      if (parsedSnapshot !== null && !parsedSnapshot.success) {
-        return;
-      }
-
-      const nextData = fromSnapshot(
-        parsedSnapshot === null ? null : parsedSnapshot.data
-      );
-      setData(nextData);
-      setSavedData(nextData);
-      setEvents((payload.events ?? []).map(mapEventRowToClinicalEvent));
-      setPendingEvents([]);
     };
 
     void loadOdontogram();
