@@ -30,7 +30,8 @@ export const eventActionSchema = z.enum([
   "completed-extraction",
   "missing",
   "clear-surface",
-  "clear-tooth"
+  "clear-tooth",
+  "clear-all"
 ]);
 
 export const toothSnapshotSchema = z.object({
@@ -75,7 +76,8 @@ export const odontogramEventInputSchema = z
       "planned-extraction",
       "completed-extraction",
       "missing",
-      "clear-tooth"
+      "clear-tooth",
+      "clear-all"
     ]);
 
     if (surfaceRequiredActions.has(value.action) && !value.surface) {

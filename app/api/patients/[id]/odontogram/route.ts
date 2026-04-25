@@ -18,6 +18,21 @@ interface OdontogramEventRow {
   action: EventAction;
 }
 
+async function validatePatientExists(patientId: string) {
+  const supabase = await createClient();
+  const { data: patient, error: patientError } = await supabase
+    .from("patients")
+    .select("id")
+    .eq("id", patientId)
+    .maybeSingle();
+
+  return {
+    supabase,
+    patient,
+    patientError
+  };
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -109,13 +124,7 @@ export async function PUT(
     );
   }
 
-  const supabase = await createClient();
-
-  const { data: patient, error: patientError } = await supabase
-    .from("patients")
-    .select("id")
-    .eq("id", patientId)
-    .maybeSingle();
+  const { supabase, patient, patientError } = await validatePatientExists(patientId);
 
   if (patientError) {
     return NextResponse.json(
@@ -191,4 +200,88 @@ export async function PUT(
     snapshot: payload.data.snapshot,
     events: (events ?? []) as OdontogramEventRow[]
   });
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: patientId } = await params;
+
+  if (!uuidRegex.test(patientId)) {
+    return NextResponse.json({ error: "Invalid patient id" }, { status: 400 });
+  }
+
+  const { supabase, patient, patientError } = await validatePatientExists(patientId);
+
+  if (patientError) {
+    return NextResponse.json(
+      { error: "Failed to validate patient", details: patientError.message },
+      { status: 500 }
+    );
+  }
+
+  if (!patient) {
+    return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+  }
+
+  const { data: authData } = await supabase.auth.getUser();
+  const userId = authData.user?.id ?? null;
+
+  const { data: odontogram, error: upsertError } = await supabase
+    .from("patient_odontograms")
+    .upsert(
+      {
+        patient_id: patientId,
+        snapshot: null,
+        updated_at: new Date().toISOString(),
+        updated_by: userId
+      },
+      { onConflict: "patient_id" }
+    )
+    .select("id")
+    .single();
+
+  if (upsertError || !odontogram) {
+    return NextResponse.json(
+      { error: "Failed to clear odontogram", details: upsertError?.message },
+      { status: 500 }
+    );
+  }
+
+  const { error: insertClearAllEventError } = await supabase
+    .from("patient_odontogram_events")
+    .insert({
+      odontogram_id: odontogram.id,
+      occurred_at: new Date().toISOString(),
+      tooth: 0,
+      surface: null,
+      action: "clear-all",
+      created_by: userId
+    });
+
+  if (insertClearAllEventError) {
+    return NextResponse.json(
+      {
+        error: "Failed to register odontogram clear event",
+        details: insertClearAllEventError.message
+      },
+      { status: 500 }
+    );
+  }
+
+  const { data: events, error: eventsError } = await supabase
+    .from("patient_odontogram_events")
+    .select("id, occurred_at, tooth, surface, action")
+    .eq("odontogram_id", odontogram.id)
+    .order("occurred_at", { ascending: false });
+
+  if (eventsError) {
+    return NextResponse.json(
+      { error: "Failed to fetch updated events", details: eventsError.message },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ snapshot: null, events: (events ?? []) as OdontogramEventRow[] });
 }

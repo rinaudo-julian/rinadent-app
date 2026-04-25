@@ -68,7 +68,8 @@ const ACTION_COLORS: Record<EventAction, string> = {
   "completed-extraction": COLOR_DONE,
   missing: COLOR_ABSENT,
   "clear-surface": "var(--muted-foreground)",
-  "clear-tooth": "var(--muted-foreground)"
+  "clear-tooth": "var(--muted-foreground)",
+  "clear-all": "var(--foreground)"
 };
 
 const ACTION_LABELS: Record<EventAction, string> = {
@@ -79,7 +80,8 @@ const ACTION_LABELS: Record<EventAction, string> = {
   "completed-extraction": "Extracción realizada",
   missing: "Pieza marcada como ausente",
   "clear-surface": "Hallazgo removido",
-  "clear-tooth": "Estado de pieza removido"
+  "clear-tooth": "Estado de pieza removido",
+  "clear-all": "Odontograma limpiado totalmente"
 };
 
 const SURFACE_KEYS: SurfaceKey[] = [
@@ -617,6 +619,16 @@ function mapEventRowToClinicalEvent(event: OdontogramEventRow): ClinicalEvent {
   };
 }
 
+function hasOdontogramContent(state: Record<number, ToothState>) {
+  return Object.values(state).some((tooth) => {
+    if (tooth.tooth !== "none") {
+      return true;
+    }
+
+    return SURFACE_KEYS.some((surface) => tooth.surfaces[surface] !== "healthy");
+  });
+}
+
 interface OdontogramTabProps {
   patientId: string;
 }
@@ -629,6 +641,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
   const [pendingEvents, setPendingEvents] = useState<ClinicalEvent[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const historyRef = useRef<HTMLDivElement | null>(null);
 
   // Click outside the history closes any expanded detail
@@ -678,6 +691,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
   }, [patientId]);
 
   const layout = PERMANENT;
+  const canClearAll = hasOdontogramContent(savedData);
 
   // Registra un evento pendiente, pero si ese cambio devuelve el target a su
   // estado guardado (savedData), elimina los eventos previos del mismo target
@@ -782,11 +796,30 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
     }
   };
 
-  const reset = () => {
-    setData({});
-    setSavedData({});
-    setEvents([]);
-    setPendingEvents([]);
+  const reset = async () => {
+    setIsResetting(true);
+    try {
+      const response = await fetch(`/api/patients/${patientId}/odontogram`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        snapshot: null;
+        events: OdontogramEventRow[];
+      };
+
+      setData({});
+      setSavedData({});
+      setEvents((payload.events ?? []).map(mapEventRowToClinicalEvent));
+      setPendingEvents([]);
+      setExpanded({});
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const save = async () => {
@@ -870,7 +903,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                 variant="default"
                 size="sm"
                 onClick={save}
-                disabled={pendingEvents.length === 0 || isSaving}
+                disabled={pendingEvents.length === 0 || isSaving || isResetting}
                 className="text-sm h-9"
               >
                 {isSaving ? "Guardando..." : "Guardar"}
@@ -879,14 +912,19 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                 variant="ghost"
                 size="sm"
                 onClick={discardChanges}
-                disabled={pendingEvents.length === 0}
+                disabled={pendingEvents.length === 0 || isResetting}
                 className="text-sm h-9"
               >
                 Deshacer cambios
               </Button>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-sm h-9">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-sm h-9"
+                    disabled={!canClearAll || isResetting || isSaving}
+                  >
                     Limpiar todo
                   </Button>
                 </DialogTrigger>
@@ -894,9 +932,9 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                   <DialogHeader>
                     <DialogTitle>¿Limpiar todo el odontograma?</DialogTitle>
                     <DialogDescription>
-                      Esta acción es destructiva. Se eliminarán todos los
-                      hallazgos, marcas y el historial clínico registrado. No se
-                      puede deshacer.
+                      Esta acción limpiará por completo el odontograma actual.
+                      Se conservará la trazabilidad en el historial con un
+                      registro de limpieza total. No se puede deshacer.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
@@ -906,9 +944,10 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                     <DialogClose asChild>
                       <Button
                         onClick={reset}
+                        disabled={isResetting}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Sí, limpiar todo
+                        {isResetting ? "Limpiando..." : "Sí, limpiar todo"}
                       </Button>
                     </DialogClose>
                   </DialogFooter>
@@ -1109,8 +1148,10 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <span className="text-sm font-semibold text-foreground tabular-nums">
-                                  Diente {group.tooth}
-                                  {group.surface && (
+                                  {group.tooth === 0
+                                    ? "Odontograma eliminado"
+                                    : `Diente ${group.tooth}`}
+                                  {group.tooth !== 0 && group.surface && (
                                     <span className="ml-1.5 font-normal capitalize text-muted-foreground">
                                       · {SURFACE_LABELS[group.surface]}
                                     </span>
@@ -1151,7 +1192,9 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
                             }}
                           >
                             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60 mb-2">
-                              Historial de esta cara
+                              {group.tooth === 0
+                                ? "Historial general"
+                                : "Historial de esta cara"}
                             </div>
                             <ol className="relative space-y-1.5 before:absolute before:left-[2px] before:top-1.5 before:bottom-1.5 before:w-px before:bg-border/70">
                               {group.events.map((e, idx) => {
