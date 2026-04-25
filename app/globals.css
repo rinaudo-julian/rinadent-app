@@ -117,13 +117,30 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+:root {
+  --surface: oklch(1 0 0);
+  --tooth-stroke: oklch(0.85 0 0);
+  --condition-planned: oklch(0.6 0.18 250);
+  /* azul */
+  --condition-existing: oklch(0.6 0.2 25);
+  /* rojo */
+  --condition-done: oklch(0.65 0.17 145);
+  /* verde */
+  --condition-absent: oklch(0.62 0.22 27);
+  /* rojo (X) */
+}
+
+
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
