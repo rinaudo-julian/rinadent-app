@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MedicalHistoryTab } from "./medical-history-tab";
-import { OdontogramaTab } from "./odontograma-tab";
+import { OdontogramTab } from "./odontogram-tab";
 import { EstudiosTab } from "./estudios-tab";
 import { TratamientosTab } from "./tratamientos-tab";
 
@@ -19,19 +19,19 @@ export function PatientDetailView({ patientId }: PatientDetailViewProps) {
         <TabsTrigger value="estudios">Estudios</TabsTrigger>
         <TabsTrigger value="tratamientos">Tratamientos</TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="medical-history">
         <MedicalHistoryTab patientId={patientId} />
       </TabsContent>
-      
+
       <TabsContent value="odontograma">
-        <OdontogramaTab />
+        <OdontogramTab patientId={patientId} />
       </TabsContent>
-      
+
       <TabsContent value="estudios">
         <EstudiosTab patientId={patientId} />
       </TabsContent>
-      
+
       <TabsContent value="tratamientos">
         <TratamientosTab />
       </TabsContent>
