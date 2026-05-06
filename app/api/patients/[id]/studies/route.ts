@@ -10,20 +10,31 @@ import { NextResponse } from "next/server";
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function getFileExtensionFromMimeType(mimeType: string): string {
-  if (mimeType === "image/png") {
+function getFileExtension(file: File): string {
+  const mimeType = file.type;
+  const fileName = file.name.toLowerCase();
+
+  if (fileName.endsWith(".dcm") || mimeType === "application/dicom") {
+    return "dcm";
+  }
+
+  if (fileName.endsWith(".png") || mimeType === "image/png") {
     return "png";
   }
 
-  if (mimeType === "image/webp") {
+  if (fileName.endsWith(".webp") || mimeType === "image/webp") {
     return "webp";
   }
 
-  return "jpg";
+  if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || mimeType === "image/jpeg") {
+    return "jpg";
+  }
+
+  return "dcm";
 }
 
-function getStudyPath(patientId: string, mimeType: string) {
-  const extension = getFileExtensionFromMimeType(mimeType);
+function getStudyPath(patientId: string, file: File) {
+  const extension = getFileExtension(file);
   const folder = `${STUDY_FOLDER_PREFIX}${patientId}-studies`;
   return `${folder}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 }
@@ -144,7 +155,7 @@ export async function POST(
   }
 
   const supabase = await createClient();
-  const studyPath = getStudyPath(patientId, result.data.file.type);
+  const studyPath = getStudyPath(patientId, result.data.file);
 
   const { error: uploadError } = await supabase.storage
     .from(STUDY_BUCKET)
@@ -154,9 +165,11 @@ export async function POST(
     });
 
   if (uploadError) {
+    const isUnsupportedMimeType = /mime type .* is not supported/i.test(uploadError.message);
+
     return NextResponse.json(
       { error: "Error al subir archivo", details: uploadError.message },
-      { status: 500 }
+      { status: isUnsupportedMimeType ? 415 : 500 }
     );
   }
 

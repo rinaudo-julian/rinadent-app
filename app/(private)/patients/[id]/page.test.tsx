@@ -19,6 +19,12 @@ vi.mock("@/components/patients/patient-detail/patient-detail-view", () => ({
   ),
 }));
 
+vi.mock("@/components/private-breadcrumbs-context", () => ({
+  usePrivateBreadcrumbs: () => ({
+    setCurrentPageLabel: vi.fn(),
+  }),
+}));
+
 import PatientDetailPage from "./page";
 import { usePatient } from "@/hooks/use-patient";
 
