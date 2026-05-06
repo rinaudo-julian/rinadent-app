@@ -57,7 +57,7 @@ export function DicomPreview({ imageUrl, className }: DicomPreviewProps) {
           },
         });
 
-        const viewport = renderingEngine.getViewport(viewportId) as {
+        const viewport = renderingEngine.getViewport(viewportId) as unknown as {
           setStack: (imageIds: string[], currentImageIdIndex: number) => Promise<void>;
           render: () => void;
           resetCamera?: () => void;
