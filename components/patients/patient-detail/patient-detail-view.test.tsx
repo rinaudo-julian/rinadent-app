@@ -20,22 +20,17 @@ vi.mock("./estudios-tab", () => ({
   ),
 }));
 
-vi.mock("./tratamientos-tab", () => ({
-  TratamientosTab: () => <h3>Tratamientos</h3>,
-}));
-
 describe("PatientDetailView", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("renders four tabs", () => {
+  it("renders three tabs", () => {
     render(<PatientDetailView patientId="123" />);
 
     expect(screen.getByRole("tab", { name: "Historial Médico" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Odontograma" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Estudios" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Tratamientos" })).toBeTruthy();
   });
 
   it("switches tab content when clicking tabs", async () => {
@@ -53,8 +48,5 @@ describe("PatientDetailView", () => {
     expect(within(estudiosPanel).getByRole("heading", { name: "Estudios" })).toBeTruthy();
     expect(within(estudiosPanel).getByText("Patient 123")).toBeTruthy();
 
-    await user.click(screen.getByRole("tab", { name: "Tratamientos" }));
-    const tratamientosPanel = screen.getByRole("tabpanel", { name: "Tratamientos" });
-    expect(within(tratamientosPanel).getByRole("heading", { name: "Tratamientos" })).toBeTruthy();
   });
 });

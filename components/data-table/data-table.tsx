@@ -72,8 +72,8 @@ export function DataTable<TData, TValue>({
         <SearchInput />
       </div>
 
-      <div className="rounded-md border">
-        <Table className="table-fixed">
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="min-w-[900px] table-auto md:table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

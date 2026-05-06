@@ -1,10 +1,11 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import { usePatient } from "@/hooks/use-patient";
 import { PatientDetailView } from "@/components/patients/patient-detail/patient-detail-view";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { usePrivateBreadcrumbs } from "@/components/private-breadcrumbs-context";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -13,6 +14,19 @@ interface PageProps {
 export default function PatientDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const { data: patient, isLoading, error } = usePatient({ id });
+  const { setCurrentPageLabel } = usePrivateBreadcrumbs();
+
+  useEffect(() => {
+    if (!patient) {
+      return;
+    }
+
+    setCurrentPageLabel(`Paciente ${patient.first_name} ${patient.last_name}`);
+
+    return () => {
+      setCurrentPageLabel(null);
+    };
+  }, [patient, setCurrentPageLabel]);
 
   if (isLoading) {
     return (
