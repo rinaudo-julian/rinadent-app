@@ -2,6 +2,7 @@
 
 import { useSelectedLayoutSegments } from "next/navigation";
 import { usePrivateBreadcrumbs } from "@/components/private-breadcrumbs-context";
+import { Fragment } from "react";
 
 import {
   Breadcrumb,
@@ -60,14 +61,16 @@ export function PrivateBreadcrumbs() {
           const isLast = index === crumbs.length - 1;
 
           return (
-            <BreadcrumbItem key={crumb.href}>
-              {isLast ? (
-                <BreadcrumbPage className="font-medium">{crumb.label}</BreadcrumbPage>
-              ) : (
-                <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
-              )}
+            <Fragment key={crumb.href}>
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage className="font-medium">{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
               {!isLast ? <BreadcrumbSeparator /> : null}
-            </BreadcrumbItem>
+            </Fragment>
           );
         })}
 

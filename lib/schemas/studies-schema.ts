@@ -22,7 +22,15 @@ export const ALLOWED_STUDY_FILE_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "application/dicom",
 ] as const;
+
+const ALLOWED_STUDY_FILE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".dcm"] as const;
+
+function hasAllowedStudyExtension(fileName: string): boolean {
+  const normalized = fileName.toLowerCase();
+  return ALLOWED_STUDY_FILE_EXTENSIONS.some((extension) => normalized.endsWith(extension));
+}
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -87,12 +95,15 @@ const fileLikeSchema = z.custom<File>(
 
 export const studyFileSchema = fileLikeSchema
   .refine(
-    (file) =>
-      ALLOWED_STUDY_FILE_MIME_TYPES.includes(
+    (file) => {
+      const mimeAllowed = ALLOWED_STUDY_FILE_MIME_TYPES.includes(
         file.type as (typeof ALLOWED_STUDY_FILE_MIME_TYPES)[number]
-      ),
+      );
+
+      return mimeAllowed || hasAllowedStudyExtension(file.name);
+    },
     {
-    message: "Solo se permiten archivos JPG, PNG o WEBP",
+    message: "Solo se permiten archivos JPG, PNG, WEBP o DICOM (.dcm)",
     }
   )
   .refine((file) => file.size <= MAX_STUDY_FILE_SIZE_BYTES, {
