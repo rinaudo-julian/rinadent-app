@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -63,18 +63,25 @@ export function EstudiosTab({ patientId }: EstudiosTabProps) {
   const dragOriginRef = useRef({ x: 0, y: 0 });
   const dialogDragCounterRef = useRef(0);
 
-  useEffect(() => {
-    if (states.isViewerDialogOpen) {
-      setZoom(1);
-      setOffset({ x: 0, y: 0 });
-    }
-  }, [states.isViewerDialogOpen, data.selectedStudy?.id]);
-
   const zoomIn = () => setZoom((prev) => Math.min(4, Number((prev + 0.2).toFixed(2))));
   const zoomOut = () => setZoom((prev) => Math.max(0.5, Number((prev - 0.2).toFixed(2))));
   const resetZoom = () => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
+  };
+
+  const handleOpenImageViewer = (study: (typeof data.studies)[number]) => {
+    resetZoom();
+    setIsDragging(false);
+    methods.openImageViewer(study);
+  };
+
+  const handleViewerOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsDragging(false);
+      resetZoom();
+      methods.closeImageViewer();
+    }
   };
 
   const isAllowedDroppedFile = (file: File) => {
@@ -201,7 +208,7 @@ export function EstudiosTab({ patientId }: EstudiosTabProps) {
               {study.preview_url && isImagePreviewable(study.file_url) ? (
                 <button
                   type="button"
-                  onClick={() => methods.openImageViewer(study)}
+                  onClick={() => handleOpenImageViewer(study)}
                   className="group relative block h-48 w-full cursor-pointer overflow-hidden"
                   aria-label={`Ampliar ${studyTypeLabels[study.type]}`}
                 >
@@ -221,7 +228,7 @@ export function EstudiosTab({ patientId }: EstudiosTabProps) {
               ) : study.preview_url && isDicomFile(study.file_url) ? (
                 <button
                   type="button"
-                  onClick={() => methods.openImageViewer(study)}
+                  onClick={() => handleOpenImageViewer(study)}
                   className="group relative block h-48 w-full cursor-pointer overflow-hidden bg-black"
                   aria-label={`Ampliar ${studyTypeLabels[study.type]}`}
                 >
@@ -362,7 +369,7 @@ export function EstudiosTab({ patientId }: EstudiosTabProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={states.isViewerDialogOpen} onOpenChange={methods.closeImageViewer}>
+      <Dialog open={states.isViewerDialogOpen} onOpenChange={handleViewerOpenChange}>
         <DialogContent className="!top-0 !left-0 !h-screen !w-screen !max-w-none !translate-x-0 !translate-y-0 rounded-none border-0 bg-black p-0">
           <DialogHeader className="sr-only">
             <DialogTitle>Vista ampliada</DialogTitle>
