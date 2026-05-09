@@ -44,14 +44,16 @@ export function PatientSearchCommand() {
     return () => clearTimeout(timer)
   }, [query])
 
-  useEffect(() => {
-    if (!open) {
+  const shouldSearch = debouncedQuery.length > 0
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+
+    if (!nextOpen) {
       setQuery("")
       setDebouncedQuery("")
     }
-  }, [open])
-
-  const shouldSearch = debouncedQuery.length > 0
+  }
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["patients", "command-search", debouncedQuery],
@@ -81,7 +83,7 @@ export function PatientSearchCommand() {
 
       <CommandDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         title="Buscar paciente"
         description="Buscar paciente por nombre"
         className="max-w-2xl"
