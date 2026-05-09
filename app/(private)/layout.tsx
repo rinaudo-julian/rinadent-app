@@ -6,6 +6,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar";
 import { PrivateBreadcrumbs } from "@/components/private-breadcrumbs";
 import { PrivateBreadcrumbsProvider } from "@/components/private-breadcrumbs-context";
+import { PatientSearchCommand } from "@/components/patients/patient-search-command";
 import { Separator } from "@/components/ui/separator";
 
 export default function DashboardLayout({
@@ -24,7 +25,10 @@ export default function DashboardLayout({
               orientation="vertical"
               className="mr-2 data-vertical:h-4 data-vertical:self-auto"
             />
-            <PrivateBreadcrumbs />
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <PrivateBreadcrumbs />
+              <PatientSearchCommand />
+            </div>
           </header>
           <main className="p-5">{children}</main>
         </SidebarInset>
