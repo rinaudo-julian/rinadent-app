@@ -4,6 +4,7 @@ import {
   patientSchema,
   type PatientFormData
 } from "@/lib/schemas/patient-schema";
+import { DEFAULT_LIMIT, normalizePage, normalizePageSize } from "@/lib/pagination";
 
 export interface Patient {
   id: string;
@@ -35,15 +36,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   // Parse and sanitize page
-  const rawPage = searchParams.get("page");
-  const parsedPage = Number(rawPage);
-  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const page = normalizePage(searchParams.get("page"));
 
   // Parse and sanitize limit
-  const rawLimit = searchParams.get("limit");
-  const parsedLimit = Number(rawLimit);
-  const validLimits = [10, 20, 30, 50];
-  const limit = validLimits.includes(parsedLimit) ? parsedLimit : 10;
+  const limit = normalizePageSize(searchParams.get("limit"), DEFAULT_LIMIT);
 
   // Calculate offset - ensure non-negative
   const offset = Math.max(0, (page - 1) * limit);

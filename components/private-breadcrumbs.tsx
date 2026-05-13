@@ -16,7 +16,8 @@ import {
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Panel",
   patients: "Pacientes",
-  treatments: "Tratamientos"
+  treatments: "Prácticas Odontológicas",
+  payments: "Cuentas Corrientes"
 };
 
 function formatSegmentLabel(segment: string, parent?: string) {
@@ -36,6 +37,34 @@ function formatSegmentLabel(segment: string, parent?: string) {
 export function PrivateBreadcrumbs() {
   const segments = useSelectedLayoutSegments();
   const { currentPageLabel } = usePrivateBreadcrumbs();
+
+  const isBudgetPaymentsRoute =
+    segments.length === 3 &&
+    segments[0] === "budgets" &&
+    segments[2] === "payments";
+
+  if (isBudgetPaymentsRoute) {
+    const budgetId = segments[1] ?? "";
+    const budgetLabel = currentPageLabel ?? budgetId;
+
+    return (
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem className="hidden md:block">
+            <BreadcrumbLink href="/dashboard">RinaDent</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator className="hidden md:block" />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/payments">Cuentas Corrientes</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-medium">{budgetLabel}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
 
   const crumbs = segments.map((segment, index) => ({
     segment,

@@ -16,6 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ALLOWED_LIMITS } from "@/lib/pagination";
+
+export const DEFAULT_PAGE_SIZE_OPTIONS = [...ALLOWED_LIMITS];
 
 interface DataTablePaginationProps {
   page: number;
@@ -50,7 +53,7 @@ export function DataTablePagination({
   totalPages,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 20, 30, 50],
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
 }: DataTablePaginationProps) {
   const paginationRange = getPaginationRange(page, totalPages);
   const canGoPrevious = page > 1;
