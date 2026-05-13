@@ -7,6 +7,13 @@ vi.mock("@/hooks/use-budget-ledger", () => ({
   useBudgetLedger: vi.fn()
 }));
 
+vi.mock("@/components/private-breadcrumbs-context", () => ({
+  usePrivateBreadcrumbs: () => ({
+    currentPageLabel: null,
+    setCurrentPageLabel: vi.fn()
+  })
+}));
+
 const resolvedParams = {
   status: "fulfilled",
   value: { id: "123" },
