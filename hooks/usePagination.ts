@@ -2,6 +2,13 @@
 
 import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  ALLOWED_LIMITS,
+  DEFAULT_LIMIT,
+  DEFAULT_PAGE,
+  normalizePage,
+  normalizePageSize
+} from "@/lib/pagination";
 
 interface UsePaginationOptions {
   defaultPage?: number;
@@ -10,14 +17,9 @@ interface UsePaginationOptions {
   pageSizeParamName?: string;
 }
 
-function toPositiveInt(value: string | null, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 export function usePagination({
-  defaultPage = 1,
-  defaultPageSize = 10,
+  defaultPage = DEFAULT_PAGE,
+  defaultPageSize = DEFAULT_LIMIT,
   pageParamName = "page",
   pageSizeParamName = "limit",
 }: UsePaginationOptions = {}) {
@@ -25,8 +27,8 @@ export function usePagination({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const page = toPositiveInt(searchParams.get(pageParamName), defaultPage);
-  const pageSize = toPositiveInt(searchParams.get(pageSizeParamName), defaultPageSize);
+  const page = normalizePage(searchParams.get(pageParamName), defaultPage);
+  const pageSize = normalizePageSize(searchParams.get(pageSizeParamName), defaultPageSize);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -43,7 +45,7 @@ export function usePagination({
 
   const setPage = useCallback(
     (nextPage: number) => {
-      const normalizedPage = Number.isFinite(nextPage) && nextPage > 0 ? nextPage : defaultPage;
+      const normalizedPage = normalizePage(String(nextPage), defaultPage);
       updateParams({ [pageParamName]: String(normalizedPage) });
     },
     [defaultPage, pageParamName, updateParams]
@@ -51,8 +53,9 @@ export function usePagination({
 
   const setPageSize = useCallback(
     (nextPageSize: number) => {
-      const normalizedPageSize =
-        Number.isFinite(nextPageSize) && nextPageSize > 0 ? nextPageSize : defaultPageSize;
+      const normalizedPageSize = ALLOWED_LIMITS.includes(nextPageSize as (typeof ALLOWED_LIMITS)[number])
+        ? nextPageSize
+        : defaultPageSize;
 
       updateParams({
         [pageParamName]: String(defaultPage),

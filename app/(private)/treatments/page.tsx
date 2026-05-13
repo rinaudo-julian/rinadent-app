@@ -8,7 +8,7 @@ export default function TreatmentsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Tratamientos</h1>
+      <h1 className="text-3xl font-bold">Prácticas Odontológicas</h1>
       <TreatmentsSidebarView logic={logic} />
     </div>
   );
