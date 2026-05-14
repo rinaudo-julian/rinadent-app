@@ -1,0 +1,133 @@
+## Verification Report
+
+**Change**: payments-patient-ledger-view  
+**Version**: N/A  
+**Mode**: Strict TDD  
+**Project**: rinadent-app
+
+---
+
+### Completeness
+| Metric | Value |
+|--------|-------|
+| Tasks total | 18 |
+| Tasks complete | 18 |
+| Tasks incomplete | 0 |
+
+No hay tasks pendientes en `sdd/payments-patient-ledger-view/tasks`.
+
+---
+
+### Build & Tests Execution
+
+**Build**: ➖ No ejecutado (`next build`) por regla del proyecto: **Never build after changes**.
+
+**Type check**: ❌ Failed (`pnpm exec tsc --noEmit`)
+```
+.next/types/validator.ts(116,39): error TS2307: Cannot find module '../../app/api/patients/[id]/odontograma/route.js' or its corresponding type declarations.
+```
+
+**Tests (full suite)**: ✅ 186 passed / ❌ 0 failed / ⚠️ 1 skipped (`pnpm test --run`)
+
+**Tests del change (ejecución focalizada)**: ✅ 15 passed / ❌ 0 failed / ⚠️ 0 skipped
+```
+pnpm exec vitest hooks/use-patient-ledger.test.tsx lib/formatters.test.ts components/payments/patient-ledger-table.test.tsx components/payments/patient-ledger-analytics.test.tsx components/payments/patient-ledger-page.integration.test.tsx components/payments/payment-patient-ledger-page.runtime.test.tsx components/payments/payment-patient-ledger-page.composition.test.tsx --run
+```
+
+**Coverage (focalizada en el change)**: 82.42% líneas globales del run / ➖ threshold no configurado
+```
+Statements: 81.76%
+Branches:   72.04%
+Functions:  79.26%
+Lines:      82.42%
+```
+
+---
+
+### TDD Compliance (Strict)
+| Check | Result | Details |
+|-------|--------|---------|
+| TDD evidence presente | ✅ | `sdd/payments-patient-ledger-view/apply-progress` contiene tabla RED/GREEN por tarea |
+| Tests por escenarios críticos | ✅ | Runtime + composición + integración + unit/component en alcance |
+| GREEN verificado | ✅ | 15/15 tests del módulo en verde |
+| Triangulación | ✅ | Casos felices + edge cases (`id` inexistente, `coveragePct=0`, clamp out-of-bounds) |
+| Safety net | ✅ | Full suite también verde (sin fallas) |
+
+---
+
+### Test Layer Distribution
+| Layer | Tests | Files |
+|-------|-------|-------|
+| Unit | 7 | `hooks/use-patient-ledger.test.tsx`, `lib/formatters.test.ts` |
+| Component | 4 | `patient-ledger-table.test.tsx`, `patient-ledger-analytics.test.tsx` |
+| Integration | 4 | `patient-ledger-page.integration.test.tsx`, `payment-patient-ledger-page.runtime.test.tsx`, `payment-patient-ledger-page.composition.test.tsx` |
+| **Total** | **15** | **7** |
+
+---
+
+### Spec Compliance Matrix
+
+| Requirement | Scenario | Test | Result |
+|-------------|----------|------|--------|
+| Patient Ledger Route Rendering | Open ledger detail page | `components/payments/payment-patient-ledger-page.runtime.test.tsx > renders in private layout/router context for /payments/[id]` | ✅ COMPLIANT |
+| Patient Ledger Route Rendering | Route id with no matching mock data | `hooks/use-patient-ledger.test.tsx > returns stable empty state for unknown id` | ✅ COMPLIANT |
+| Analytics Cards with Coverage Progress | Render analytics summary | `components/payments/patient-ledger-analytics.test.tsx > renders analytics summary cards with total, covered and pending values` | ✅ COMPLIANT |
+| Analytics Cards with Coverage Progress | Zero covered percentage | `components/payments/patient-ledger-analytics.test.tsx > shows summary values and valid 0% progress` | ✅ COMPLIANT |
+| History Table Columns Contract | Table headers contract | `components/payments/patient-ledger-table.test.tsx > renders exact headers without extra columns` | ✅ COMPLIANT |
+| History Table Columns Contract | Empty history state | `components/payments/patient-ledger-table.test.tsx > renders empty state` | ✅ COMPLIANT |
+| Paginated History Navigation | Navigate to next page | `components/payments/patient-ledger-page.integration.test.tsx > updates query params and visible rows when changing page` | ✅ COMPLIANT |
+| Paginated History Navigation | Page out of bounds normalization | `hooks/use-patient-ledger.test.tsx > clamps out of bounds page` | ✅ COMPLIANT |
+| UI-Only and No-CTA Scope | Load ledger without backend | `components/payments/payment-patient-ledger-page.runtime.test.tsx > renders ledger without backend calls and without transactional CTAs` | ✅ COMPLIANT |
+| UI-Only and No-CTA Scope | CTA prohibition | `components/payments/payment-patient-ledger-page.runtime.test.tsx > renders ledger without backend calls and without transactional CTAs` | ✅ COMPLIANT |
+| Separation of Logic and Presentation | Hook-driven composition | `components/payments/payment-patient-ledger-page.composition.test.tsx > delegates pagination behavior to hook-provided handlers` | ✅ COMPLIANT |
+
+**Compliance summary**: **11/11 scenarios compliant**
+
+---
+
+### Correctness (Static — Structural Evidence)
+| Requirement | Status | Notes |
+|------------|--------|-------|
+| `/payments/[id]` render + id | ✅ Implemented | `page.tsx` usa `params: Promise` + `use(params)` y pasa `id` al hook |
+| Mocks-only (sin API/DB) | ✅ Implemented | `usePatientLedger` usa `PATIENT_LEDGER_MOCKS` |
+| Analytics + progress | ✅ Implemented | `PatientLedgerAnalytics` usa cards + `Progress` |
+| Tabla estricta 3 columnas | ✅ Implemented | `PatientLedgerTable` sólo `Método/Monto/Fecha` |
+| Paginación con normalización | ✅ Implemented | `usePagination` + `clampPage` + slice por página |
+| No CTAs transaccionales | ✅ Implemented | UI del ledger no agrega acciones create/edit/charge/export |
+| Separación lógica/presentación | ✅ Implemented | Hook de dominio + componentes presentacionales tipados |
+
+---
+
+### Coherence (Design)
+| Decision | Followed? | Notes |
+|----------|-----------|-------|
+| Lógica en hook | ✅ Yes | `hooks/use-patient-ledger.ts` |
+| Fuente mock tipada local | ✅ Yes | `components/payments/mocks/patient-ledger.mock.ts` |
+| Paginación URL con `usePagination` | ✅ Yes | `page`/`limit` vía router/search params |
+| Tabla de dominio acotada | ✅ Yes | 3 columnas, sin DataTable genérica para historial |
+| Helpers centralizados formato | ✅ Yes | `lib/formatters.ts` |
+| Progress primitive | ⚠️ Deviated (non-blocking) | `components/ui/progress.tsx` custom accesible por ausencia de dependencia Radix específica |
+
+---
+
+### Issues Found
+
+**CRITICAL (bloqueantes para archive)**
+- None.
+
+**WARNING (no bloqueantes, fuera de scope del change)**
+1. `pnpm exec tsc --noEmit` falla por error global ajeno al change en `.next/types/validator.ts` (missing `app/api/patients/[id]/odontograma/route.js`).
+2. Vite/Vitest informa warning global de configuración: `vite-tsconfig-paths` es redundante con soporte nativo de Vite.
+
+**SUGGESTION**
+1. Corregir el módulo faltante de `.next/types/validator.ts` para restablecer salud global de type-check.
+2. Limpiar warning de Vite removiendo plugin redundante o activando `resolve.tsconfigPaths` nativo.
+
+---
+
+### Verdict
+**PASS WITH WARNINGS**
+
+**Change status**: ✅ **PASS / READY-TO-ARCHIVE**.  
+Cumplimiento funcional del change: completo (11/11 escenarios con evidencia de test en runtime).  
+Warnings globales detectados están fuera de alcance y se clasifican como non-blocking, según criterio solicitado.

@@ -1,0 +1,84 @@
+# Design: Payments Patient Ledger View
+
+## Technical Approach
+Implementar `/payments/[id]` como página cliente en `app/(private)` con composición container/presentational: la página consume `usePatientLedger` (orquestación de mocks + métricas + paginación por query params) y delega render en componentes `components/payments/*`. Se reutilizan primitives shadcn (`card`, `table`, `pagination`) y se integra `progress` para cobertura. Sin fetch/API/DB.
+
+## Architecture Decisions
+
+| Decisión | Opciones | Tradeoff | Elección |
+|---|---|---|---|
+| Ubicación de lógica | Lógica en página vs hook de dominio | Página rápida pero acopla UI/estado; hook mejora testabilidad y separación | `hooks/use-patient-ledger.ts` con derivados (analytics, slice, normalización) |
+| Fuente de datos | API real vs mock tipado local | API refleja producción pero rompe alcance UI-only | Mock tipado (`components/payments/mocks/patient-ledger.mock.ts`) |
+| Paginación | Estado local vs `usePagination` con URL | Local simplifica pero pierde deep-link/share; URL mantiene patrón repo | Reusar `usePagination` (`page`, `limit`) + normalización por totalPages |
+| Tabla historial | `DataTable` genérica vs tabla de dominio | DataTable trae features extra (riesgo columnas/CTA) | Tabla presentacional acotada 3 columnas (`método`, `monto`, `fecha`) |
+| Formateo | Inline por componente vs helpers centralizados | Inline duplica e inconsiste (ya ocurre en pacientes) | Helpers en `lib/formatters.ts` (`formatCurrencyArs`, `formatDateEsAr`) |
+| Progress shadcn | Componente local ad-hoc vs primitive `ui/progress` | Ad-hoc duplica UI; primitive mantiene design system | Crear `components/ui/progress.tsx` solo si no existe |
+
+## Data Flow
+
+`/payments/[id]` → `PatientLedgerPage` → `usePatientLedger(id)` → busca mock por `id` → calcula métricas (`total`,`covered`,`pending`,`coveragePct`) + `totalPages` + `rowsSlice` → props tipadas a:
+
+- `PatientLedgerAnalytics` (cards + progress)
+- `PatientLedgerTable` (3 columnas)
+- `PatientLedgerPagination` (cambia query params)
+
+Si `id` no existe: hook devuelve estructura vacía estable (`rows=[]`, métricas en 0, `totalPages=1`).
+
+## File Changes
+
+| File | Action | Description |
+|---|---|---|
+| `app/(private)/payments/[id]/page.tsx` | Create | Entry point cliente; resuelve `params.id`, setea breadcrumb contextual y compone vista |
+| `components/private-breadcrumbs.tsx` | Modify | Agregar mapping `payments: "Pagos"` |
+| `hooks/use-patient-ledger.ts` | Create | Lógica de mock lookup, derivados analytics, slice paginado y clamp de página |
+| `components/payments/patient-ledger-view.tsx` | Create | Componente composición/presentación de secciones |
+| `components/payments/patient-ledger-analytics.tsx` | Create | Cards de resumen y barra `Progress` |
+| `components/payments/patient-ledger-table.tsx` | Create | Tabla estricta método/monto/fecha + empty state |
+| `components/payments/patient-ledger-pagination.tsx` | Create | Wrapper de `DataTablePagination` sin CTAs adicionales |
+| `components/payments/mocks/patient-ledger.mock.ts` | Create | Dataset mock tipado de ledger por paciente |
+| `components/payments/types/patient-ledger.types.ts` | Create | Contratos de movimiento, resumen, VM de la vista |
+| `components/ui/progress.tsx` | Create (conditional) | Primitive shadcn progress, solo si no existe en repo |
+| `lib/formatters.ts` | Create | Helpers comunes de moneda/fecha para evitar inconsistencias |
+
+## Interfaces / Contracts
+
+```ts
+type LedgerMethod = "Efectivo" | "Transferencia" | "Tarjeta";
+
+interface LedgerMovement {
+  id: string;
+  method: LedgerMethod;
+  amount: number;
+  date: string; // ISO
+}
+
+interface PatientLedger {
+  patientId: string;
+  totalAmount: number;
+  coveredAmount: number;
+  movements: LedgerMovement[];
+}
+
+interface UsePatientLedgerResult {
+  analytics: { total: number; covered: number; pending: number; coveragePct: number };
+  rows: LedgerMovement[];
+  pagination: { page: number; pageSize: number; totalItems: number; totalPages: number; setPage: (n:number)=>void; setPageSize:(n:number)=>void };
+}
+```
+
+## Testing Strategy
+
+| Layer | What to Test | Approach |
+|---|---|---|
+| Unit | `usePatientLedger` (lookup, pct 0%, clamp out-of-bounds, slice) | Vitest hook tests con casos id inexistente y page inválida |
+| Unit | `lib/formatters` moneda/fecha | Casos determinísticos de locale y fallback inválido |
+| Component | Tabla 3 headers exactos y empty state | RTL: assert headers `Método/Monto/Fecha` y ausencia de columnas extra |
+| Component | Analytics + progress | RTL: valor 0% visible y progress válido |
+| Integration | Page + query params | Test similar a patients: cambios de paginación actualizan URL |
+
+## Migration / Rollout
+No migration required. Cambio UI-only con mocks locales.
+
+## Open Questions
+- [ ] Definir `defaultPageSize` para historial (10 recomendado para consistencia con `usePagination`).
+- [ ] Confirmar copy exacto para empty states en analytics/tabla.

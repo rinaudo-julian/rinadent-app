@@ -1,0 +1,32 @@
+# Tasks: Payments Patient Ledger View
+
+## Phase 1: Foundation
+
+- [x] 1.1 Verificar guía Next.js aplicable en `node_modules/next/dist/docs/` para rutas dinámicas/App Router usadas en `app/(private)/payments/[id]/page.tsx`. **Done:** compatibilidad Next 16 confirmada (`dynamic-routes.md` + `page.md`): `params` es Promise en App Router y en Client Component se consume con `use(params)`.
+- [x] 1.2 Crear `components/payments/types/patient-ledger.types.ts` con contratos `LedgerMethod`, `LedgerMovement`, `PatientLedger`, `UsePatientLedgerResult`. **Done:** tipos exportados sin `any` y consumibles desde hook/componentes.
+- [x] 1.3 Crear `components/payments/mocks/patient-ledger.mock.ts` con dataset tipado (incluyendo paciente inexistente/empty-state). **Done:** mock compila y cubre casos con movimientos y sin movimientos.
+- [x] 1.4 Crear `lib/formatters.ts` con `formatCurrencyArs` y `formatDateEsAr` + fallback seguro para valores inválidos. **Done:** funciones puras exportadas y reutilizables.
+- [x] 1.5 Agregar `components/ui/progress.tsx` usando patrón shadcn (solo si no existe). **Done:** componente `Progress` exportado y renderizable sin errores.
+
+## Phase 2: Core Domain + Presentation
+
+- [x] 2.1 Crear `hooks/use-patient-ledger.ts` para lookup por `id`, analytics (`total/covered/pending/coveragePct`), `rows` y paginación con clamp. **Done:** id inexistente devuelve estructura estable (`rows=[]`, métricas 0, `totalPages=1`).
+- [x] 2.2 Integrar query params de paginación (`page`, `limit`) en el hook reutilizando `usePagination` del repo. **Done:** estado se normaliza cuando `page` está fuera de rango.
+- [x] 2.3 Crear `components/payments/patient-ledger-analytics.tsx` con cards shadcn + `Progress` para cobertura. **Done:** muestra 0% válido y visible cuando `covered=0`.
+- [x] 2.4 Crear `components/payments/patient-ledger-table.tsx` con tabla estricta de columnas `Método`, `Monto`, `Fecha` + empty state. **Done:** no existen columnas extra ni CTAs de fila.
+- [x] 2.5 Crear `components/payments/patient-ledger-pagination.tsx` como wrapper de paginación sin CTAs transaccionales. **Done:** solo controles de navegación de páginas.
+- [x] 2.6 Crear `components/payments/patient-ledger-view.tsx` para componer analytics + tabla + paginación con props tipadas. **Done:** componente presentacional sin lógica de dominio.
+
+## Phase 3: Route Wiring
+
+- [x] 3.1 Crear `app/(private)/payments/[id]/page.tsx` (cliente) resolviendo `params.id` y consumiendo `usePatientLedger`. **Done:** `/payments/[id]` renderiza en layout privado sin fetch/API/DB.
+- [x] 3.2 Modificar `components/private-breadcrumbs.tsx` agregando mapping `payments: "Pagos"`. **Done:** breadcrumb muestra contexto correcto para ruta de pagos.
+- [x] 3.3 Conectar page con `PatientLedgerView` pasando view-model tipado y handlers de paginación por query params. **Done:** cambio de página actualiza slice visible sin romper la vista.
+
+## Phase 4: Testing (Vitest + Testing Library)
+
+- [x] 4.1 Unit tests para `hooks/use-patient-ledger.ts`: lookup, `coveragePct=0`, clamp out-of-bounds, slicing paginado, id inexistente. **Done:** casos pasan en Vitest.
+- [x] 4.2 Unit tests para `lib/formatters.ts`: formato ARS, fecha ES-AR y fallback inválido. **Done:** assertions determinísticas por locale.
+- [x] 4.3 Component tests de `patient-ledger-table.tsx`: headers exactos `Método/Monto/Fecha`, empty state y ausencia de columnas extra/CTA. **Done:** RTL valida contrato visual.
+- [x] 4.4 Component tests de `patient-ledger-analytics.tsx`: valores de resumen y progress visible en 0%. **Done:** RTL confirma estado válido de progress.
+- [x] 4.5 Integration test de `app/(private)/payments/[id]/page.tsx` o composición equivalente: paginación modifica query params y actualiza filas. **Done:** flujo end-to-end del módulo pasa en entorno jsdom.

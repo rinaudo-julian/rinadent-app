@@ -19,7 +19,7 @@ import {
   SidebarRail,
   SidebarFooter
 } from "@/components/ui/sidebar";
-import { GalleryVerticalEnd, Users, LayoutDashboard, DollarSign } from "lucide-react";
+import { GalleryVerticalEnd, Users, LayoutDashboard, ClipboardList, CreditCard } from "lucide-react";
 import { LogoutButton } from "@/components/logout-button";
 import type { LucideIcon } from "lucide-react";
 
@@ -58,9 +58,14 @@ const data: { navMain: NavGroup[] } = {
           icon: Users
         },
         {
-          title: "Tratamientos",
+          title: "Prácticas Odontológicas",
           url: "/treatments",
-          icon: DollarSign
+          icon: ClipboardList
+        },
+        {
+          title: "Cuentas Corrientes",
+          url: "/payments",
+          icon: CreditCard
         }
       ]
     }

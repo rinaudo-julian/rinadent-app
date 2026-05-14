@@ -1,0 +1,90 @@
+# Payments Ledger View Specification
+
+## Purpose
+Definir el comportamiento funcional de la vista de ledger de pagos por paciente en `/payments/[id]`, para una primera entrega de solo UI con datos mock y sin acciones transaccionales.
+
+## Requirements
+
+### Requirement: Patient Ledger Route Rendering
+The system MUST render a private patient ledger view at route `/payments/[id]` and SHALL resolve the patient identifier from the route segment.
+
+#### Scenario: Open ledger detail page
+- GIVEN a user is authenticated in the private area
+- WHEN the user navigates to `/payments/123`
+- THEN the ledger page is rendered in the private layout context
+- AND the page receives `id=123` as the active patient reference
+
+#### Scenario: Route id with no matching mock data
+- GIVEN the route id does not exist in the mock dataset
+- WHEN the user opens `/payments/[id]`
+- THEN the page still renders without runtime errors
+- AND ledger sections show empty-state compatible data
+
+### Requirement: Analytics Cards with Coverage Progress
+The system MUST show analytical summary cards using existing shadcn card components, and MUST use shadcn/ui `progress` component to represent covered percentage.
+
+#### Scenario: Render analytics summary
+- GIVEN mock ledger totals are available
+- WHEN the page renders analytics
+- THEN summary values are displayed in card-based blocks
+- AND covered percentage is visualized with a progress bar
+
+#### Scenario: Zero covered percentage
+- GIVEN covered amount is zero
+- WHEN analytics are rendered
+- THEN the progress value is shown as 0%
+- AND the progress indicator remains valid and visible
+
+### Requirement: History Table Columns Contract
+The system MUST render the payment history table with ONLY these columns: `método`, `monto`, `fecha`.
+
+#### Scenario: Table headers contract
+- GIVEN ledger movements are loaded from mock data
+- WHEN the history table is displayed
+- THEN only método, monto, fecha headers are present
+- AND no extra operational or CTA columns are rendered
+
+#### Scenario: Empty history state
+- GIVEN the selected patient has no movements
+- WHEN the history table section loads
+- THEN the table structure remains valid
+- AND an empty result state is shown without adding new columns
+
+### Requirement: Paginated History Navigation
+The system MUST paginate the history table and SHALL update the visible slice according to active page state.
+
+#### Scenario: Navigate to next page
+- GIVEN movement count exceeds one page size
+- WHEN the user selects the next page
+- THEN table rows update to the corresponding page slice
+- AND pagination state remains consistent with current page index
+
+#### Scenario: Page out of bounds normalization
+- GIVEN an invalid page value is requested
+- WHEN pagination state is resolved
+- THEN the page index is normalized to a valid range
+- AND the view remains stable without crashing
+
+### Requirement: UI-Only and No-CTA Scope
+The system MUST operate with typed mock data only, MUST NOT require database/API calls, and MUST NOT render CTAs (create/edit/charge/export/row actions).
+
+#### Scenario: Load ledger without backend
+- GIVEN no backend connectivity is available
+- WHEN the page is opened
+- THEN all ledger content is sourced from in-memory mock data
+- AND no data-fetch dependency blocks rendering
+
+#### Scenario: CTA prohibition
+- GIVEN the ledger view is rendered
+- WHEN the user inspects interactive elements
+- THEN informational controls for pagination only are available
+- AND transactional/action CTAs are absent
+
+### Requirement: Separation of Logic and Presentation
+The system MUST separate domain logic into hooks and SHALL keep rendering concerns in presentational components.
+
+#### Scenario: Hook-driven composition
+- GIVEN ledger state and derived metrics are needed
+- WHEN page composition is implemented
+- THEN derivation/pagination/mock orchestration live in hook modules
+- AND presentational components consume typed props without owning domain logic

@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Patient } from "@/hooks/use-patients";
 
 function calculateAge(dateOfBirth: string): number {
@@ -32,17 +31,20 @@ function formatCreatedAt(createdAt: string): string {
 export const patientsTableColumns: ColumnDef<Patient>[] = [
   {
     id: "name",
-    accessorFn: (patient) => `${patient.first_name} ${patient.last_name}`,
+    accessorFn: (patient) => `${patient.first_name} ${patient.last_name}`.trim(),
     header: ({ column }) => <DataTableColumnHeader column={column} title="Paciente" />,
     cell: ({ row }) => {
       const patient = row.original;
+      const fullName = `${patient.first_name} ${patient.last_name}`.trim() || "Paciente sin nombre";
 
       return (
-        <Button variant="link" className="h-auto p-0 font-medium" asChild>
-          <Link href={`/patients/${patient.id}`} className="block truncate">
-            {row.getValue("name") as string}
-          </Link>
-        </Button>
+        <Link
+          href={`/patients/${patient.id}`}
+          title={fullName}
+          className="block w-full min-w-0 truncate text-left font-medium text-primary hover:underline"
+        >
+          {fullName}
+        </Link>
       );
     },
     meta: {

@@ -6,6 +6,7 @@ import { usePatients } from "@/hooks/use-patients";
 import { usePagination } from "@/hooks/usePagination";
 
 const mockPush = vi.fn();
+const mockReplace = vi.fn();
 
 vi.mock("@/hooks/use-patients", () => ({
   usePatients: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock("next/navigation", () => ({
    usePathname: () => "/patients",
   useRouter: () => ({
     push: mockPush,
+    replace: mockReplace,
   }),
 }));
 
@@ -78,6 +80,7 @@ describe("Patients data table", () => {
     cleanup();
     vi.clearAllMocks();
     mockPush.mockClear();
+    mockReplace.mockClear();
     vi.mocked(useSearchParams).mockReturnValue(createSearchParams(""));
   });
 
