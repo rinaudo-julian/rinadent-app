@@ -5,54 +5,89 @@ export const surfaceKeySchema = z.enum([
   "vestibular",
   "mesial",
   "distal",
-  "lingual"
+  "palatino"
 ]);
 
-export const surfaceStateSchema = z.enum([
-  "healthy",
-  "planned",
-  "existing",
-  "completed"
-]);
-
-export const toothStateSchema = z.enum([
-  "none",
-  "planned-extraction",
-  "completed-extraction",
-  "missing"
+export const treatmentStatusSchema = z.enum(["pending", "completed"]);
+export const toothStatusSchema = z.enum(["to_extract", "missing"]);
+export const surfaceStatusSchema = z.enum([
+  "cavity",
+  "pre_existing_restoration"
 ]);
 
 export const eventActionSchema = z.enum([
-  "planned",
-  "existing",
-  "completed",
-  "planned-extraction",
-  "completed-extraction",
+  "surface-cavity-pending",
+  "surface-pre-existing",
+  "surface-cavity-completed",
+  "tooth-extract-pending",
+  "tooth-extract-completed",
   "missing",
   "clear-surface",
   "clear-tooth",
   "clear-all"
 ]);
 
-export const toothSnapshotSchema = z.object({
-  tooth: toothStateSchema,
-  surfaces: z.object({
-    oclusal: surfaceStateSchema,
-    vestibular: surfaceStateSchema,
-    mesial: surfaceStateSchema,
-    distal: surfaceStateSchema,
-    lingual: surfaceStateSchema
-  })
+export const toothSurfaceSnapshotSchema = z.object({
+  status: surfaceStatusSchema,
+  treatment_status: treatmentStatusSchema
 });
 
-export const odontogramSnapshotSchema = z.object({
-  teeth: z.record(
-    z
-      .string()
-      .regex(/^[1-8][1-8]$/, "Tooth keys must follow FDI notation"),
-    toothSnapshotSchema
-  )
-});
+export const toothSnapshotSchema = z
+  .object({
+    status: toothStatusSchema.optional(),
+    treatment_status: treatmentStatusSchema.optional(),
+    surfaces: z
+      .record(surfaceKeySchema, toothSurfaceSnapshotSchema)
+      .optional()
+  })
+  .superRefine((value, ctx) => {
+    if (value.status === "missing") {
+      if (value.treatment_status !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "treatment_status is not allowed when status is missing",
+          path: ["treatment_status"]
+        });
+      }
+      if (value.surfaces !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "surfaces is not allowed when status is missing",
+          path: ["surfaces"]
+        });
+      }
+    }
+
+    if (value.status === "to_extract") {
+      if (value.treatment_status === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "treatment_status is required when status is to_extract",
+          path: ["treatment_status"]
+        });
+      }
+      if (value.surfaces !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "surfaces is not allowed when status is to_extract",
+          path: ["surfaces"]
+        });
+      }
+    }
+
+    if (value.status === undefined && value.treatment_status !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "treatment_status is only allowed when status exists",
+        path: ["treatment_status"]
+      });
+    }
+  });
+
+export const odontogramSnapshotSchema = z.record(
+  z.string().regex(/^[1-8][1-8]$/, "Tooth keys must follow FDI notation"),
+  toothSnapshotSchema
+);
 
 export const odontogramEventInputSchema = z
   .object({
@@ -67,14 +102,14 @@ export const odontogramEventInputSchema = z
   })
   .superRefine((value, ctx) => {
     const surfaceRequiredActions = new Set([
-      "planned",
-      "existing",
-      "completed",
+      "surface-cavity-pending",
+      "surface-pre-existing",
+      "surface-cavity-completed",
       "clear-surface"
     ]);
     const toothOnlyActions = new Set([
-      "planned-extraction",
-      "completed-extraction",
+      "tooth-extract-pending",
+      "tooth-extract-completed",
       "missing",
       "clear-tooth",
       "clear-all"
@@ -103,8 +138,9 @@ export const saveOdontogramPayloadSchema = z.object({
 });
 
 export type SurfaceKey = z.infer<typeof surfaceKeySchema>;
-export type SurfaceState = z.infer<typeof surfaceStateSchema>;
-export type ToothState = z.infer<typeof toothStateSchema>;
+export type TreatmentStatus = z.infer<typeof treatmentStatusSchema>;
+export type SurfaceStatus = z.infer<typeof surfaceStatusSchema>;
+export type ToothStatus = z.infer<typeof toothStatusSchema>;
 export type EventAction = z.infer<typeof eventActionSchema>;
 export type OdontogramSnapshot = z.infer<typeof odontogramSnapshotSchema>;
 export type OdontogramEventInput = z.infer<typeof odontogramEventInputSchema>;
