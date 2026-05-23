@@ -29,7 +29,23 @@ export const eventActionSchema = z.enum([
 
 export const toothSurfaceSnapshotSchema = z.object({
   status: surfaceStatusSchema,
-  treatment_status: treatmentStatusSchema
+  treatment_status: treatmentStatusSchema.optional()
+}).superRefine((value, ctx) => {
+  if (value.status === "pre_existing_restoration" && value.treatment_status !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "treatment_status is not allowed for pre_existing_restoration",
+      path: ["treatment_status"]
+    });
+  }
+
+  if (value.status === "cavity" && value.treatment_status === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "treatment_status is required for cavity",
+      path: ["treatment_status"]
+    });
+  }
 });
 
 export const toothSnapshotSchema = z

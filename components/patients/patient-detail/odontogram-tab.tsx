@@ -44,7 +44,7 @@ interface ToothState {
       SurfaceKey,
       {
         status: SurfaceStatus;
-        treatment_status: TreatmentStatus;
+        treatment_status?: TreatmentStatus;
       }
     >
   >;
@@ -105,13 +105,12 @@ const SURFACE_LABELS: Record<SurfaceKey, string> = {
 };
 
 const SURFACE_STATE_LABELS: Record<
-  `${SurfaceStatus}:${TreatmentStatus}`,
+  `${SurfaceStatus}:${TreatmentStatus | "none"}`,
   string
 > = {
   "cavity:pending": "Caries a tratar",
   "cavity:completed": "Restauración realizada",
-  "pre_existing_restoration:pending": "Restauración preexistente",
-  "pre_existing_restoration:completed": "Restauración preexistente"
+  "pre_existing_restoration:none": "Restauración preexistente"
 };
 
 const COLOR_MODE_MAP: Record<ColorMode, string> = {
@@ -199,7 +198,7 @@ function Tooth({
     .map((s) => {
       const surface = state.surfaces?.[s];
       if (!surface) return "";
-      const key = `${surface.status}:${surface.treatment_status}` as const;
+      const key = `${surface.status}:${surface.treatment_status ?? "none"}` as const;
       return `${SURFACE_LABELS[s]}: ${SURFACE_STATE_LABELS[key]}`;
     })
     .filter(Boolean)
@@ -666,7 +665,7 @@ export function OdontogramTab({ patientId }: OdontogramTabProps) {
         : selectedColor === "red"
           ? ({
               status: "pre_existing_restoration",
-              treatment_status: "pending"
+              treatment_status: undefined
             } as const)
           : ({ status: "cavity", treatment_status: "completed" } as const);
 
