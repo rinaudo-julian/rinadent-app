@@ -104,10 +104,12 @@ const SURFACE_LABELS: Record<SurfaceKey, string> = {
   palatino: "Palatino"
 };
 
-const SURFACE_STATE_LABELS: Record<
-  `${SurfaceStatus}:${TreatmentStatus | "none"}`,
-  string
-> = {
+type SurfaceLabelKey =
+  | "cavity:pending"
+  | "cavity:completed"
+  | "pre_existing_restoration:none";
+
+const SURFACE_STATE_LABELS: Record<SurfaceLabelKey, string> = {
   "cavity:pending": "Caries a tratar",
   "cavity:completed": "Restauración realizada",
   "pre_existing_restoration:none": "Restauración preexistente"
@@ -198,7 +200,7 @@ function Tooth({
     .map((s) => {
       const surface = state.surfaces?.[s];
       if (!surface) return "";
-      const key = `${surface.status}:${surface.treatment_status ?? "none"}` as const;
+      const key = `${surface.status}:${surface.treatment_status ?? "none"}` as SurfaceLabelKey;
       return `${SURFACE_LABELS[s]}: ${SURFACE_STATE_LABELS[key]}`;
     })
     .filter(Boolean)
